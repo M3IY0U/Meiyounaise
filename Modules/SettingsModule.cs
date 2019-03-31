@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Meiyounaise.DB;
+using Microsoft.Data.Sqlite;
 
 namespace Meiyounaise.Modules
 {
@@ -20,15 +22,34 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("nick"), Description("Changes the Bot's Nickname.")]
-        public async Task Nick(CommandContext ctx, [RemainingText, Description("The new Nickname.")]
-            string newnick)
+        [Command("prefix")]
+        [Description("Set the Bot's Prefix on this guild.")]
+        public async Task Prefix(CommandContext ctx, [RemainingText, Description("The new Prefix")] string newPrefix = "")
         {
-            await ctx.Guild.CurrentMember.ModifyAsync(newnick);
+            if (newPrefix=="")
+            {
+                await ctx.RespondAsync($"The prefix on this guild is `{Guilds.GetGuild(ctx.Guild).Prefix}`");
+                return;
+            }
+            Utilities.Con.Open();
+            using (var cmd = new SqliteCommand($"UPDATE Guilds SET prefix = '{newPrefix}' WHERE Guilds.id = {ctx.Guild.Id}", Utilities.Con))
+            {
+                cmd.ExecuteReader();
+            }
+            Utilities.Con.Close();
+            Guilds.UpdateGuildPrefix(ctx.Guild);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("icon"), Description("Change the Botx Avatar"), RequireOwner]
+        [Command("nick"), Description("Changes the Bot's Nickname.")]
+        public async Task Nick(CommandContext ctx, [RemainingText, Description("The new Nickname.")]
+            string newNick)
+        {
+            await ctx.Guild.CurrentMember.ModifyAsync(newNick);
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+        }
+
+        [Command("icon"), Description("Change the Bot's Avatar"), RequireOwner]
         public async Task Icon(CommandContext ctx, string url = null)
         {
             var path = $"{Utilities.DataPath}icon.png";

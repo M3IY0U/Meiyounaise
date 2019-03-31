@@ -8,11 +8,12 @@
     <ItemGroup>
       <PackageReference Include="DSharpPlus" Version="3.2.3" />
       <PackageReference Include="DSharpPlus.CommandsNext" Version="3.2.3" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="3.2.3" />
+      <PackageReference Include="DSharpPlus.VoiceNext" Version="3.2.3" />
       <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.3" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="DB" />
       <Folder Include="Services" />
     </ItemGroup>
 
