@@ -24,7 +24,10 @@ namespace Meiyounaise.DB
                         {
                             Id = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
                             BoardChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("boardChannel"))),
-                            Prefix = rdr.GetString(rdr.GetOrdinal("prefix"))
+                            Prefix = rdr.GetString(rdr.GetOrdinal("prefix")),
+                            JoinMsg = rdr.GetString(rdr.GetOrdinal("joinMsg")),
+                            LeaveMsg = rdr.GetString(rdr.GetOrdinal("leaveMsg")),
+                            JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel")))
                         });
                         
                     }
@@ -33,7 +36,7 @@ namespace Meiyounaise.DB
             Utilities.Con.Close();
         }
 
-        public static void UpdateGuildPrefix(DiscordGuild guild)
+        public static void UpdateGuild(DiscordGuild guild)
         {
             Utilities.Con.Open();
             using (var cmd = new SqliteCommand($"SELECT * FROM Guilds WHERE Guilds.id = {guild.Id}", Utilities.Con))
@@ -46,7 +49,10 @@ namespace Meiyounaise.DB
                         {
                             Id = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
                             BoardChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("boardChannel"))),
-                            Prefix = rdr.GetString(rdr.GetOrdinal("prefix"))
+                            Prefix = rdr.GetString(rdr.GetOrdinal("prefix")),
+                            JoinMsg = rdr.GetString(rdr.GetOrdinal("joinMsg")),
+                            LeaveMsg = rdr.GetString(rdr.GetOrdinal("leaveMsg")),
+                            JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel")))
                         };
                         _guilds.Remove(GetGuild(guild));
                         _guilds.Add(newGuild);
@@ -68,6 +74,9 @@ namespace Meiyounaise.DB
             public string Prefix { get; set; }
             public ulong Id { get; set; }
             public ulong BoardChannel { get; set; }
+            public string JoinMsg { get; set; }
+            public string LeaveMsg { get; set; }
+            public ulong JlMessageChannel { get; set; }
         }
     }
     

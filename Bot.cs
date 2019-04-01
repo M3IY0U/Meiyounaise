@@ -28,7 +28,8 @@ namespace Meiyounaise
                 TokenType = TokenType.Bot,
                 UseInternalLogHandler = true
             });
-            
+
+
             _interactivity = _client.UseInteractivity(new InteractivityConfiguration()
             {
                 PaginationBehaviour = TimeoutBehaviour.Delete,
@@ -50,8 +51,10 @@ namespace Meiyounaise
             
             _cnext.RegisterCommands(Assembly.GetEntryAssembly());
     
-            _client.Ready += Utilities.Ready;
-            
+            _client.Ready += DB.EventHandlers.Ready;
+            _client.GuildCreated += DB.EventHandlers.GuildCreated;
+            _client.GuildMemberAdded += DB.EventHandlers.UserJoined;
+            _client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
         }
 
         private Task<int> CustomPrefixPredicate(DiscordMessage msg)
@@ -84,48 +87,4 @@ namespace Meiyounaise
             _cnext = null;
         }
     }
-
-    /*
-    class Bot
-    {
-        private static DiscordClient _discord;
-        private static CommandsNextModule _commands;
-        
-        private static void Main()
-        {
-            MainAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-
-        private static async Task MainAsync()
-        {
-            _discord = new DiscordClient(new DiscordConfiguration
-            {
-                Token = Utilities.GetKey("bottoken"),
-                UseInternalLogHandler = true,
-                LogLevel = LogLevel.Debug,
-                TokenType = TokenType.Bot
-            });
-
-            _commands = _discord.UseCommandsNext(new CommandsNextConfiguration
-            {
-                StringPrefix = "$",
-                CaseSensitive = false,
-                EnableMentionPrefix = true,
-                EnableDms = false
-            });
-
-            _commands.RegisterCommands(Assembly.GetEntryAssembly());
-            
-            
-            
-            _discord.MessageCreated += async e =>
-            {
-                if (e.Message.Content.ToLower().StartsWith("ping"))
-                    await e.Message.RespondAsync("pong!");
-            };
-
-            await _discord.ConnectAsync();
-            await Task.Delay(-1);
-        }
-    }*/
 }

@@ -20,6 +20,12 @@ namespace Meiyounaise.Modules
         {
             await ctx.Client.UpdateStatusAsync(new DiscordGame(status));
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+            Utilities.Con.Open();
+            using (var cmd = new SqliteCommand($"INSERT INTO Status VALUES ('{status}');",Utilities.Con))
+            {
+                cmd.ExecuteReader();
+            }
+            Utilities.Con.Close();
         }
 
         [Command("prefix")]
@@ -37,7 +43,7 @@ namespace Meiyounaise.Modules
                 cmd.ExecuteReader();
             }
             Utilities.Con.Close();
-            Guilds.UpdateGuildPrefix(ctx.Guild);
+            Guilds.UpdateGuild(ctx.Guild);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
