@@ -13,8 +13,6 @@ namespace Meiyounaise.DB
     {
         public static async Task Ready(ReadyEventArgs e)
         {
-            if (e.Client is DiscordClient c)
-                await c.UpdateStatusAsync(new DiscordGame("Booting Up🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚🌚"));
             var guilds = e.Client.Guilds.Select(guild => guild.Value).ToList();
             var dbGuilds = new List<ulong>();
             Utilities.Con.Open();
@@ -34,7 +32,7 @@ namespace Meiyounaise.DB
                 if (dbGuilds.Contains(guild.Id)) continue;
                 using (var cmd =
                     new SqliteCommand(
-                        $"INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg,jlMsgChannel) VALUES ('{guild.Id}','&','0','empty','empty', '0')",
+                        $"INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg,jlMsgChannel,reactionNeeded) VALUES ('{guild.Id}','&','0','empty','empty', '0','0')",
                         Utilities.Con))
                 {
                     cmd.ExecuteReader();
@@ -50,7 +48,7 @@ namespace Meiyounaise.DB
             Utilities.Con.Open();
             using (var cmd =
                 new SqliteCommand(
-                    $"INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg, jlMsgChannel) VALUES ('{args.Guild.Id}','&','0','empty', 'empty', '0')",
+                    $"INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg, jlMsgChannel, reactionNeeded) VALUES ('{args.Guild.Id}','&','0','empty', 'empty', '0', '0')",
                     Utilities.Con))
             {
                 cmd.ExecuteReader();
@@ -66,7 +64,7 @@ namespace Meiyounaise.DB
             Utilities.Con.Open();
             using (var cmd =
                 new SqliteCommand(
-                    $"SELECT text FROM Status ORDER BY RANDOM() LIMIT 1", Utilities.Con))
+                    "SELECT text FROM Status ORDER BY RANDOM() LIMIT 1", Utilities.Con))
             {
                 using (var rdr = cmd.ExecuteReader())
                 {
@@ -104,6 +102,61 @@ namespace Meiyounaise.DB
         private static bool ShouldSendMessage(string m, ulong c)
         {
             return m != "empty" && m != "" && c != 0;
+        }
+
+        public static async Task ReactionAdded(MessageReactionAddEventArgs e)
+        {
+            if (e.User.IsBot) return;
+            
+            var guild = Guilds.GetGuild(e.Message.Channel.Guild);
+            
+            //ABORT IF BOARD IS NOT ENABLED/SET UP
+            if (guild.BoardChannel == 0 || guild.ReactionNeeded == 0) return;
+            
+            
+            
+            if (!Messages.BoardMessages.ContainsKey(e.Message.Id))
+            {
+                Messages.BoardMessages.Add(e.Message.Id, false);
+                Utilities.Con.Open();
+                using (var cmd = new SqliteCommand($"INSERT INTO Messages (id,sent) VALUES ('{e.Message.Id}','{false}')",Utilities.Con))
+                {
+                    cmd.ExecuteReader();
+                }
+                Utilities.Con.Close();
+            }
+            //ABORT IF MESSAGE IS ALREADY SENT
+            if (Messages.BoardMessages[e.Message.Id]) return;
+
+            var msg = await e.Channel.GetMessageAsync(e.Message.Id);
+            
+            if (e.Message.Reactions.Any(reaction => reaction.Count >= guild.ReactionNeeded))
+            {
+                var builder = new DiscordEmbedBuilder()
+                    .AddField("Author", msg.Author.Mention, true)
+                    .AddField("Channel", msg.Channel.Mention, true)
+                    .WithThumbnailUrl(msg.Author.AvatarUrl)
+                    .AddField("Link",
+                        $"[Jump to](https://discordapp.com/channels/{e.Message.Channel.Guild.Id}/{e.Message.ChannelId}/{e.Message.Id})")
+                    .WithTimestamp(msg.Timestamp)
+                    .WithFooter($"{e.Emoji.GetDiscordName()}");
+                if (msg.Content!="")
+                {
+                    builder.AddField("Message", msg.Content);
+                }
+                if (msg.Attachments.Any())
+                {
+                    builder.WithImageUrl(msg.Attachments.First().Url);
+                }
+                await e.Message.Channel.Guild.GetChannel(guild.BoardChannel).SendMessageAsync(null,false,builder.Build());
+                Messages.BoardMessages[e.Message.Id] = true;
+                Utilities.Con.Open();
+                using (var cmd = new SqliteCommand($"UPDATE Messages SET sent= 'true' WHERE Messages.id = '{e.Message.Id}'",Utilities.Con))
+                {
+                    cmd.ExecuteReader();
+                }
+                Utilities.Con.Close();
+            }
         }
     }
 }

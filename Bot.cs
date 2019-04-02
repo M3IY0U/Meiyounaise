@@ -55,6 +55,7 @@ namespace Meiyounaise
             _client.GuildCreated += DB.EventHandlers.GuildCreated;
             _client.GuildMemberAdded += DB.EventHandlers.UserJoined;
             _client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
+            _client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
         }
 
         private Task<int> CustomPrefixPredicate(DiscordMessage msg)

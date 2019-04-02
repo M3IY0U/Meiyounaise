@@ -27,7 +27,8 @@ namespace Meiyounaise.DB
                             Prefix = rdr.GetString(rdr.GetOrdinal("prefix")),
                             JoinMsg = rdr.GetString(rdr.GetOrdinal("joinMsg")),
                             LeaveMsg = rdr.GetString(rdr.GetOrdinal("leaveMsg")),
-                            JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel")))
+                            JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
+                            ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded"))
                         });
                         
                     }
@@ -52,7 +53,8 @@ namespace Meiyounaise.DB
                             Prefix = rdr.GetString(rdr.GetOrdinal("prefix")),
                             JoinMsg = rdr.GetString(rdr.GetOrdinal("joinMsg")),
                             LeaveMsg = rdr.GetString(rdr.GetOrdinal("leaveMsg")),
-                            JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel")))
+                            JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
+                            ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded"))
                         };
                         _guilds.Remove(GetGuild(guild));
                         _guilds.Add(newGuild);
@@ -77,6 +79,7 @@ namespace Meiyounaise.DB
             public string JoinMsg { get; set; }
             public string LeaveMsg { get; set; }
             public ulong JlMessageChannel { get; set; }
+            public int ReactionNeeded { get; set; }
         }
     }
     
