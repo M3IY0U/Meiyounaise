@@ -55,7 +55,7 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("icon"), Description("Change the Bot's Avatar"), RequireOwner]
+        [Command("icon"), Description("Change the Bot's Avatar"), RequireOwner, Hidden]
         public async Task Icon(CommandContext ctx, string url = null)
         {
             var path = $"{Utilities.DataPath}icon.png";
@@ -68,6 +68,7 @@ namespace Meiyounaise.Modules
         [Command("info")]
         public async Task Info(CommandContext ctx)
         {
+            
             var rand = new Random();
             var process = Process.GetCurrentProcess();
             var embed = new DiscordEmbedBuilder()
@@ -75,13 +76,14 @@ namespace Meiyounaise.Modules
                     (float) rand.NextDouble()))
                 .WithAuthor("Meiyounaise", null, ctx.Client.CurrentUser.AvatarUrl)
                 .WithTitle("Info about this Bot")
-                .WithDescription("Meiyounaise is being maintained by Meiyou#0001 on Discord. \n" +
+                .WithDescription("This rewrite of Meiyounaise is being maintained by Meiyou#0001 on Discord. \n" +
                                  "If something breaks or kills the bot, please tell me :)\n" +
                                  "[Here's an invite if you want this bot on your server](https://discordapp.com/oauth2/authorize?client_id=488112585640509442&permissions=16384&scope=bot)")
-                .AddField("Uptime", (DateTime.Now - process.StartTime).ToString("d'd 'h'h 'm'm 's's'"), true)
+                .AddField("Process UpTime", (DateTime.Now - process.StartTime).ToString("d'd 'h'h 'm'm 's's'"), true)
                 .AddField("Current Threads", process.Threads.Count.ToString(), true)
                 .AddField("Memory Usage", $"{process.WorkingSet64 / 1000000} MB", true)
-                .AddField("Guilds", ctx.Client.Guilds.Count.ToString(), true);
+                .AddField("Guilds", ctx.Client.Guilds.Count.ToString(), true)
+                .AddField("Library Version", ctx.Client.VersionString, true);
             await ctx.RespondAsync(null, false, embed.Build());
         }
     }

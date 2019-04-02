@@ -8,10 +8,10 @@ using Microsoft.Data.Sqlite;
 
 namespace Meiyounaise.Modules
 {
-    [Group("GuildConfig"),Aliases("gc")]
+    [Group("GuildConfig"),Aliases("gc"),Description("Commands for configuring the Emoji Board and join/leave messages in a guild.")]
     public class GuildConfigModule
     {
-        [Command("joinmsg")]
+        [Command("joinmsg"),Description("Sets the message that the bot will post if someone joins the guild.")]
         [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetJoinMsg(CommandContext ctx, [RemainingText,Description("The new Join message. You can use '[user]' for pinging the joined user. Pass 'disable' if you don't want one.")] string jm = "")
         {
@@ -22,7 +22,7 @@ namespace Meiyounaise.Modules
 
             if (jm == "")
             {
-                await ctx.RespondAsync($"The current JoinMessage on this guild is: \"{Guilds.GetGuild(ctx.Guild).JoinMsg}\"");
+                await ctx.RespondAsync($"The current JoinMessage on this guild is: `\"{Guilds.GetGuild(ctx.Guild).JoinMsg}\"`.");
                 return;
             }
             Utilities.Con.Open();
@@ -35,7 +35,7 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("msgchannel")]
+        [Command("msgchannel"),Description("Sets the channel where the bot will post join/leave messages.")]
         [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetJoinLeaveChannel(CommandContext ctx, [Description("A mention of the channel you want the messages to appear in or 'disable' to disable it.")]string chn = "")
         {
@@ -64,9 +64,9 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("ramount")]
+        [Command("ramount"),Description("Sets the required amount of reaction a message needs to be posted in the board.")]
         [RequireUserPermissions(Permissions.Administrator)]
-        public async Task Ramount(CommandContext ctx, [Description("The amount of reaction (of any kind) a message needs to get posted in the board. Set to 0 to disable")]int amount)
+        public async Task Ramount(CommandContext ctx, [Description("The amount of reaction (of any kind) a message needs to get posted in the board. Set to 0 to disable.")]int amount)
         {
             Utilities.Con.Open();
             using (var cmd = new SqliteCommand($"UPDATE Guilds SET reactionNeeded = '{amount}' WHERE Guilds.id = '{ctx.Guild.Id}'", Utilities.Con))
@@ -78,7 +78,7 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("boardchannel")]
+        [Command("boardchannel"),Description("Sets the channel where the bot will post messages that have enough reactions.")]
         [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetBoardChannel(CommandContext ctx, [Description("A mention of the new board channel or 'disable' to disable it.")]string chn = "")
         {
@@ -109,7 +109,7 @@ namespace Meiyounaise.Modules
         
         
         
-        [Command("leavemsg")]
+        [Command("leavemsg"),Description("Sets the message that the bot will post if someone leaves the guild.")]
         [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetLeaveMsg(CommandContext ctx, [RemainingText,Description("The new Leave message. You can use '[user]' for \"pinging\" the user. Pass 'disable' if you don't want one.")] string lm = "")
         {

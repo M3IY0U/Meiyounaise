@@ -8,11 +8,11 @@ namespace Meiyounaise.DB
 {
     public class Guilds
     {
-        private static List<Guild> _guilds;
+        internal static List<Guild> GuildList;
 
         static Guilds()
         {
-            _guilds = new List<Guild>();
+            GuildList = new List<Guild>();
             Utilities.Con.Open();
             using (var cmd = new SqliteCommand("SELECT * FROM Guilds", Utilities.Con))
             {
@@ -20,7 +20,7 @@ namespace Meiyounaise.DB
                 {
                     while (rdr.Read())
                     {
-                        _guilds.Add(new Guild
+                        GuildList.Add(new Guild
                         {
                             Id = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
                             BoardChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("boardChannel"))),
@@ -30,7 +30,6 @@ namespace Meiyounaise.DB
                             JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
                             ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded"))
                         });
-                        
                     }
                 }
             }
@@ -56,8 +55,8 @@ namespace Meiyounaise.DB
                             JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
                             ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded"))
                         };
-                        _guilds.Remove(GetGuild(guild));
-                        _guilds.Add(newGuild);
+                        GuildList.Remove(GetGuild(guild));
+                        GuildList.Add(newGuild);
                     }
                 }
             }
@@ -66,13 +65,24 @@ namespace Meiyounaise.DB
 
         public static Guild GetGuild(DiscordGuild guild)
         {
-            var result = from a in _guilds
+            var result = from a in GuildList
                 where a.Id == guild.Id
                 select a;
             return result.FirstOrDefault();
         }
         public class Guild
         {
+            public Guild(){}
+            public Guild(ulong id)
+            {
+                Id = id;
+                Prefix = "&";
+                BoardChannel = 0;
+                JoinMsg = "empty";
+                LeaveMsg = "empty";
+                JlMessageChannel = 0;
+                ReactionNeeded = 0;
+            }
             public string Prefix { get; set; }
             public ulong Id { get; set; }
             public ulong BoardChannel { get; set; }

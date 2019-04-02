@@ -19,12 +19,10 @@ namespace Meiyounaise.DB
                 {
                     while (rdr.Read())
                     {
-                        BoardMessages.Add(Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
-                            rdr.GetBoolean(rdr.GetOrdinal("sent")));
+                        BoardMessages.Add(Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),Convert.ToBoolean(rdr.GetValue(rdr.GetOrdinal("sent"))));
                     }
                 }
             }
-
             Utilities.Con.Close();
         }
     }

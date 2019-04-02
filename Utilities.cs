@@ -23,7 +23,7 @@ namespace Meiyounaise
                 Console.WriteLine("oh gott oh fick die datenbank ist weg");
                 Environment.Exit(0);
             }
-
+            
             var result = "";
             Con.Open();
             using (var cmd = new SqliteCommand($"SELECT token FROM Tokens WHERE service = '{name}'", Con))
@@ -34,14 +34,11 @@ namespace Meiyounaise
                     {
                         result = Convert.ToString(rdr["token"]);
                     }
-
                     Con.Close();
                     return result;
                 }
             }
         }
-
-        
 
         public static async Task DownloadAsync(Uri requestUri, string filename)
         {
