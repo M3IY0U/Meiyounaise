@@ -48,6 +48,7 @@ namespace Meiyounaise.Modules
                     cmd.ExecuteReader();
                 }
                 Utilities.Con.Close();
+                Users.UpdateUser(ctx.User);
             }
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
@@ -72,17 +73,15 @@ namespace Meiyounaise.Modules
             }
 
             var info = await Client.User.GetInfoAsync(username);
-            var isPlaying = "Last Track";
-            var isNowPlaying = response.Content.First().IsNowPlaying;
-            if (isNowPlaying != null) isPlaying = "Now Playing";
+            
+            var isPlaying = response.Content.First().IsNowPlaying != null ? "Now Playing" : "Last Track";
+            
             var embed = new DiscordEmbedBuilder()
                 .WithAuthor($"{username} - {isPlaying}", $"https://www.last.fm/user/{username}","http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
                 .WithColor(DiscordColor.Red)
-                .AddField("Artist - Song",
-                    string.Concat(
-                        $"[{response.Content.First().ArtistName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(","\\(").Replace(")","\\)")})",
-                        " - ", $"[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(","\\(").Replace(")","\\)")})"))
-                
+                .WithDescription(string.Concat(
+                    $"[{response.Content.First().ArtistName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(","\\(").Replace(")","\\)")})",
+                    " - ", $"[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(","\\(").Replace(")","\\)")})"))               
                 .WithFooter($"{info.Content.Playcount} total scrobbles on last.fm")
                 .WithThumbnailUrl(response.Content.First().Images.Large != null
                     ? response.Content.First().Images.Large.AbsoluteUri

@@ -51,6 +51,7 @@ namespace Meiyounaise.DB
 
         public static Task GuildCreated(GuildCreateEventArgs args)
         {
+            if (Guilds.GuildList.Exists(x => x.Id == args.Guild.Id)) return Task.CompletedTask;
             //Once the bot joins a guild (while he's online), add it to the Database
             Utilities.Con.Open();
             using (var cmd =
