@@ -60,7 +60,9 @@ namespace Meiyounaise.DB
             var result = from a in UserList
                 where a.Id == user.Id
                 select a;
-            return result.FirstOrDefault();
+
+            var enumerable = result.ToList();
+            return enumerable.ToList().Any() ? enumerable.ToList().First() : null;
         }
         public class User
         {
