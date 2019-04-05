@@ -5,57 +5,47 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Interactivity;
 
 namespace Meiyounaise
 {
-    class Bot : IDisposable
+    internal class Bot : IDisposable
     {
-        private DiscordClient _client;
-        private CommandsNextModule _cnext;
-        private InteractivityModule _interactivity;
+        public static DiscordClient Client;
+        private CommandsNextExtension _cnext;
         private CancellationTokenSource _cts;
 
         public Bot()
         {
-            _client = new DiscordClient(new DiscordConfiguration()
+            Client = new DiscordClient(new DiscordConfiguration()
             {
                 AutoReconnect = true,
-                EnableCompression = true,
-                LogLevel = LogLevel.Debug,
+                LogLevel = LogLevel.Info,
                 Token = Utilities.GetKey("bottoken"),
                 TokenType = TokenType.Bot,
                 UseInternalLogHandler = true
             });
-
-
-            _interactivity = _client.UseInteractivity(new InteractivityConfiguration()
-            {
-                PaginationBehaviour = TimeoutBehaviour.Delete,
-                PaginationTimeout = TimeSpan.FromSeconds(30),
-                Timeout = TimeSpan.FromSeconds(30)
-            });
             
             _cts = new CancellationTokenSource();
             
-            _cnext = _client.UseCommandsNext(new CommandsNextConfiguration()
+            _cnext = Client.UseCommandsNext(new CommandsNextConfiguration
             {
                 CaseSensitive = false,
                 EnableDefaultHelp = true,
                 EnableDms = false,
                 EnableMentionPrefix = true,
-                CustomPrefixPredicate = CustomPrefixPredicate
+                PrefixResolver= CustomPrefixPredicate
             });
            
             
             _cnext.RegisterCommands(Assembly.GetEntryAssembly());
-    
-            _client.Ready += DB.EventHandlers.Ready;
-            _client.GuildCreated += DB.EventHandlers.GuildCreated;
-            _client.GuildMemberAdded += DB.EventHandlers.UserJoined;
-            _client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
-            _client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
+            _cnext.CommandErrored += DB.EventHandlers.CommandErrored;
+            
+            Client.Ready += DB.EventHandlers.Ready;
+            Client.GuildCreated += DB.EventHandlers.GuildCreated;
+            Client.GuildMemberAdded += DB.EventHandlers.UserJoined;
+            Client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
+            Client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
+            Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
         }
 
         private Task<int> CustomPrefixPredicate(DiscordMessage msg)
@@ -71,7 +61,7 @@ namespace Meiyounaise
 
         public async Task RunAsync()
         {
-            await _client.ConnectAsync();
+            await Client.ConnectAsync();
             await WaitForCancellationAsync();
         }
         
@@ -83,8 +73,7 @@ namespace Meiyounaise
         
         public void Dispose()
         {
-            _client.Dispose();
-            _interactivity = null;
+            Client.Dispose();
             _cnext = null;
         }
     }

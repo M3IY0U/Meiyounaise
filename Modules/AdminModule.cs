@@ -1,6 +1,8 @@
+using DSharpPlus.CommandsNext;
+
 namespace Meiyounaise.Modules
 {
-    public class AdminModule
+    public class AdminModule : BaseCommandModule
     {
         
     }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -16,10 +17,8 @@ using Microsoft.Data.Sqlite;
 
 namespace Meiyounaise.Modules
 {
-    [Group("fm", CanInvokeWithoutSubcommand = true),
-     Description(
-         "Group containing all last.fm commands. If you just use `fm` you'll get your currently playing song/last played track")]
-    public class LastFmModule
+    [Group("fm"),Description("Group containing all last.fm commands. If you just use `fm` you'll get your currently playing song/last played track")]
+    public class LastFmModule : BaseCommandModule
     {
         private List<Chart> _charts = new List<Chart>();
 
@@ -72,7 +71,8 @@ namespace Meiyounaise.Modules
         }
 
         //Normal fm
-        public async Task ExecuteGroupAsync(CommandContext ctx,
+        [GroupCommand]
+        public async Task Fm(CommandContext ctx,
             [Description("The user you want to see the last track of. Leave empty for own account.")]
             string username = "")
         {
@@ -140,12 +140,12 @@ namespace Meiyounaise.Modules
                             playCount = album.PlayCount.Value + " Plays";
                         html += album.Images.Large != null
                             ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{album.Images.Large.AbsoluteUri}\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName}<br>-<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     case "names":
                         html += album.Images.Large != null
                             ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{album.Images.Large.AbsoluteUri}\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName}<br>-<br>{album.Name}</p></div>";
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>";
                         break;
                     case "blank":
                         html += album.Images.Large != null
@@ -234,7 +234,7 @@ namespace Meiyounaise.Modules
                     return 5;
                 default:
                     throw new Exception(
-                        "Available Timespans are: `overall` (default), `year`, `half`, `quarter`, `month` and `week`.\nFor different options use `&[album/artist]chart (timespan) (all | names | plays | blank) (username)`");
+                        "Couldn't convert timespan! Try using `help fm [artist/album]chart` to get more info.");
             }
         }
 
@@ -242,7 +242,7 @@ namespace Meiyounaise.Modules
         {
             using (var exeProcess = Process.Start(new ProcessStartInfo
             {
-                FileName = "wkhtmltoimage.exe",
+                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "wkhtmltoimage.exe" : "wkhtmltoimage",
                 Arguments =
                     $"{width} {height} {Utilities.DataPath}chart{chrt.Id}.html {Utilities.DataPath}chart{chrt.Id}.png",
                 UseShellExecute = false,
@@ -262,10 +262,9 @@ namespace Meiyounaise.Modules
         }
 
 
-        [Command("albumchart")]
+        [Command("albumchart"), Cooldown(1,10,CooldownBucketType.User)]
         [Description("Returns an Image of your Top Albums scrobbled on last.fm.")]
-        public async Task GenerateAlbumChart(CommandContext ctx, string timespan = "", string option = "all",
-            string uname = "")
+        public async Task GenerateAlbumChart(CommandContext ctx, [Description("The username whose artistchart you want to generate. Leave blank for own account.")]string uname = "", [Description("Available Timespans: Overall, Year, Half, Quarter, Month and Week")]string timespan = "", [Description("Available Options: all, names, plays, blank")]string option = "all")
         {
             var thisChart = new Chart
             {
@@ -300,7 +299,7 @@ namespace Meiyounaise.Modules
             var albums = await Client.User.GetTopAlbums(name, (LastStatsTimeSpan) ts, 1, 25);
             if (!albums.Success)
             {
-                if (uname != "")
+                if (uname == "")
                 {
                     await ctx.RespondAsync("last.fm's response was not successful, try again later!");
                 }
@@ -341,8 +340,7 @@ namespace Meiyounaise.Modules
 
         [Command("artistchart")]
         [Description("Returns an Image of your Top Albums scrobbled on last.fm.")]
-        public async Task GenerateArtistChart(CommandContext ctx, string timespan = "", string option = "all",
-            string uname = "")
+        public async Task GenerateArtistChart(CommandContext ctx, [Description("The username whose albumchart you want to generate. Leave blank for own account.")]string uname = "", [Description("Available Timespans: Overall, Year, Half, Quarter, Month and Week")]string timespan = "", [Description("Available Options: all, names, plays, blank")]string option = "all")
         {
             var thisChart = new Chart
             {
@@ -352,7 +350,15 @@ namespace Meiyounaise.Modules
             _charts.Add(thisChart);
             //Trigger typing to let the user know we're generating his chart
             await ctx.TriggerTypingAsync();
+            //If a name was provided, generate a chart for that user
+            var name = uname == "" ? Users.GetUser(ctx.User).Last : uname;
 
+            if (name == null)
+            {
+                await ctx.RespondAsync(
+                    $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
+                return;
+            }
             //Last.fm timespans are weird so we have to convert it
             int ts;
             try
@@ -365,21 +371,13 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            //If a name was provided, generate a chart for that user
-            var name = uname == "" ? Users.GetUser(ctx.User).Last : uname;
-
-            if (name == null)
-            {
-                await ctx.RespondAsync(
-                    $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
-                return;
-            }
+            
 
             //Get the top 25 albums on last.fm
             var artists = await Client.User.GetTopArtists(name, (LastStatsTimeSpan) ts, 1, 25);
             if (!artists.Success)
             {
-                if (uname != "")
+                if (uname == "")
                 {
                     await ctx.RespondAsync("last.fm's response was not successful, try again later!");
                 }

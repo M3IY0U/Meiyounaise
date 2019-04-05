@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DSharpPlus;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Data.Sqlite;
@@ -15,11 +15,11 @@ namespace Meiyounaise.DB
         {
             //Get all guilds the Bot is connected to
             var guilds = e.Client.Guilds.Select(guild => guild.Value).ToList();
-           
+
             //Once the Client is ready, get all guilds in the database and put them into dbGuilds
             var dbGuilds = new List<ulong>();
             Utilities.Con.Open();
-            using (var cmd = new SqliteCommand("SELECT id FROM Guilds", Utilities.Con))
+            using (var cmd = new SqliteCommand($"SELECT id FROM Guilds", Utilities.Con))
             {
                 using (var rdr = cmd.ExecuteReader())
                 {
@@ -44,7 +44,7 @@ namespace Meiyounaise.DB
             }
 
             Utilities.Con.Close();
-            
+
             //Update the "Playing" status to something random
             await Status(e);
         }
@@ -61,6 +61,7 @@ namespace Meiyounaise.DB
             {
                 cmd.ExecuteReader();
             }
+
             Utilities.Con.Close();
             Guilds.GuildList.Add(new Guilds.Guild(args.Guild.Id));
             return Task.CompletedTask;
@@ -69,23 +70,25 @@ namespace Meiyounaise.DB
         private static async Task Status(DiscordEventArgs e)
         {
             //Set the status to a random one from the database
-            var c = e.Client as DiscordClient;
+            var c = e.Client;
             Utilities.Con.Open();
             using (var cmd =
                 new SqliteCommand(
-                    "SELECT text FROM Status ORDER BY RANDOM() LIMIT 1", Utilities.Con))
+                    $"SELECT text FROM Status ORDER BY RANDOM() LIMIT 1", Utilities.Con))
             {
                 using (var rdr = cmd.ExecuteReader())
                 {
                     if (rdr.Read())
                     {
-                        c?.UpdateStatusAsync(new DiscordGame(rdr.GetString(0)));
+                        c?.UpdateStatusAsync(new DiscordActivity(rdr.GetString(0), ActivityType.ListeningTo));
                     }
                 }
             }
+
             Utilities.Con.Close();
             await Task.CompletedTask;
         }
+
 
         public static async Task UserJoined(GuildMemberAddEventArgs e)
         {
@@ -102,7 +105,7 @@ namespace Meiyounaise.DB
             var guild = Guilds.GetGuild(e.Guild);
             //Abort if the guild doesn't have join/leave messages set up
             if (!ShouldSendMessage(guild.LeaveMsg, guild.JlMessageChannel)) return;
-            
+
             await e.Guild.GetChannel(guild.JlMessageChannel)
                 .SendMessageAsync(guild.LeaveMsg.Replace("[user]", $"{e.Member.Username}#{e.Member.Discriminator}"));
         }
@@ -119,65 +122,190 @@ namespace Meiyounaise.DB
             if (e.User.IsBot) return;
             //Put into variable for convenience
             var guild = Guilds.GetGuild(e.Message.Channel.Guild);
-            
+
             //Abort if the guild has no board set up
             if (guild.BoardChannel == 0 || guild.ReactionNeeded == 0) return;
-            
+
             //This means that it was the first reaction to the message, and that we have to add it to the Database
-            if (!Messages.BoardMessages.ContainsKey(e.Message.Id))
+            //if (!Messages.BoardMessages.ContainsKey(e.Message.Id))
+            if (!Messages.BoardMessages.Exists(x => x.SourceId == e.Message.Id))
             {
-                Messages.BoardMessages.Add(e.Message.Id, false);
+                Messages.BoardMessages.Add(new Messages.Message {SourceId = e.Message.Id, BoardId = 0, Sent = false});
                 Utilities.Con.Open();
-                using (var cmd = new SqliteCommand($"INSERT INTO Messages (id,sent) VALUES ('{e.Message.Id}','{false}')",Utilities.Con))
+                using (var cmd =
+                    new SqliteCommand($"INSERT INTO Messages (id,sent,bId) VALUES ('{e.Message.Id}','{false}','0')",
+                        Utilities.Con))
                 {
                     cmd.ExecuteReader();
                 }
+
                 Utilities.Con.Close();
             }
+
             //Put into variable for convenience
             var msg = await e.Channel.GetMessageAsync(e.Message.Id);
-            
-            //Abort if the message has already been posted to the board
-            if (Messages.BoardMessages[msg.Id]) return;
 
-            //Loop through all reactions on the message
-            foreach (var reaction in msg.Reactions)
+            //Abort if the message has already been posted to the board
+
+            if (Messages.BoardMessages.Exists(x => x.SourceId == msg.Id && x.Sent))
             {
-                //If the current reaction is less than what we need, we skip this one
-                if (reaction.Count < guild.ReactionNeeded) continue;
-                //Build a fancy little embed
-                var rand = new Random();
-                var builder = new DiscordEmbedBuilder().AddField("Author", msg.Author.Mention, true)
-                    .AddField("Channel", msg.Channel.Mention, true)
-                    .WithThumbnailUrl(msg.Author.AvatarUrl)
-                    .WithTimestamp(msg.Timestamp)
-                    .WithColor(new DiscordColor((float) rand.NextDouble(), (float) rand.NextDouble(),
-                        (float) rand.NextDouble()));
-                //This is needed so that the bot doesn't shit itself if the message was just a picture
-                if (msg.Content != "")
+                var bmsg = await e.Channel.Guild.GetChannel(guild.BoardChannel)
+                    .GetMessageAsync(Messages.BoardMessages.Find(x => x.SourceId == msg.Id).BoardId);
+
+                //Loop through all reactions on the message
+                var reactions = new List<string>();
+                foreach (var reaction in msg.Reactions)
                 {
-                    builder.AddField("Message", msg.Content);
+                    if (reaction.Count < guild.ReactionNeeded) continue;
+                    try
+                    {
+                        reactions.Add(reaction.Emoji.IsAnimated
+                            ? $"{DiscordEmoji.FromGuildEmote(Bot.Client, reaction.Emoji.Id)} x {reaction.Count}"
+                            : $"{DiscordEmoji.FromName(Bot.Client, reaction.Emoji.GetDiscordName())} x {reaction.Count}");
+                    }
+                    catch (Exception)
+                    {
+                        reactions.Add(reaction.Emoji.GetDiscordName());
+                    }
                 }
-                builder.AddField("Link",
-                    $"[Jump to](https://discordapp.com/channels/{e.Message.Channel.Guild.Id}/{e.Message.ChannelId}/{e.Message.Id})");
-                //If there were any attachments, put it into the image field of the embed (apparently it doesn't throw if it's an mp3/4 and I'm okay with that)
-                if (msg.Attachments.Any())
-                {
-                    builder.WithImageUrl(msg.Attachments.First().Url);
-                }
-                //Post the message to the board
-                await e.Message.Channel.Guild.GetChannel(guild.BoardChannel).SendMessageAsync($"{reaction.Emoji}", false, builder.Build());
-                //Update it in our local collection and in the database so it doesn't get sent twice
-                Messages.BoardMessages[e.Message.Id] = true;
-                Utilities.Con.Open();
-                using (var cmd = new SqliteCommand($"UPDATE Messages SET sent= 'true' WHERE Messages.id = '{e.Message.Id}'", Utilities.Con))
-                {
-                    cmd.ExecuteReader();
-                }
-                Utilities.Con.Close();
-                //Break so it only gets posted once
-                break;
+
+                await bmsg.ModifyAsync(string.Join(" • ", reactions));
             }
+            else
+            {
+                var sendIt = false;
+                var reactions = new List<string>();
+                //Loop through all reactions on the message
+                foreach (var reaction in msg.Reactions)
+                {
+                    //If the current reaction is less than what we need, we skip this one
+                    if (reaction.Count < guild.ReactionNeeded) continue;
+                    try
+                    {
+                        reactions.Add(reaction.Emoji.IsAnimated
+                            ? $"{DiscordEmoji.FromGuildEmote(Bot.Client, reaction.Emoji.Id)} x {reaction.Count}"
+                            : $"{DiscordEmoji.FromName(Bot.Client, reaction.Emoji.GetDiscordName())} x {reaction.Count}");
+                    }
+                    catch (Exception)
+                    {
+                        reactions.Add($"{reaction.Emoji.GetDiscordName()} x {reaction.Count}");
+                    }
+
+                    sendIt = true;
+                }
+
+                if (sendIt)
+                {
+                    //Post the message to the board
+                    var bmsg = await e.Message.Channel.Guild.GetChannel(guild.BoardChannel)
+                        .SendMessageAsync(string.Join(" • ", reactions), false, BuildEmbed(msg));
+
+                    //Update it in our local collection and in the database so it doesn't get sent twice
+                    Messages.BoardMessages.Remove(Messages.BoardMessages.Find(x => x.SourceId == e.Message.Id));
+                    Messages.BoardMessages.Add(new Messages.Message
+                    {
+                        SourceId = msg.Id,
+                        BoardId = bmsg.Id,
+                        Sent = true
+                    });
+                    Utilities.Con.Open();
+                    using (var cmd =
+                        new SqliteCommand(
+                            $"UPDATE Messages SET sent= 'true', bId = '{bmsg.Id}' WHERE Messages.id = '{e.Message.Id}'",
+                            Utilities.Con))
+                    {
+                        cmd.ExecuteReader();
+                    }
+
+                    Utilities.Con.Close();
+                }
+            }
+        }
+        
+        public static async Task ReactionRemoved(MessageReactionRemoveEventArgs e)
+        {
+            var guild = Guilds.GetGuild(e.Message.Channel.Guild);
+            if (guild.BoardChannel == 0 || guild.ReactionNeeded == 0) return;
+            if (e.User.IsBot) return;
+
+            var msg = await e.Channel.GetMessageAsync(e.Message.Id);
+
+            //Abort if the message has already been posted to the board
+
+            if (Messages.BoardMessages.Exists(x => x.SourceId == msg.Id && x.Sent))
+            {
+                var bmsg = await e.Channel.Guild.GetChannel(guild.BoardChannel)
+                    .GetMessageAsync(Messages.BoardMessages.Find(x => x.SourceId == msg.Id).BoardId);
+
+                //Loop through all reactions on the message
+                var reactions = new List<string>();
+                foreach (var reaction in msg.Reactions)
+                {
+                    if (reaction.Count < guild.ReactionNeeded) continue;
+                    try
+                    {
+                        reactions.Add(reaction.Emoji.IsAnimated
+                            ? $"{DiscordEmoji.FromGuildEmote(Bot.Client, reaction.Emoji.Id)} x {reaction.Count}"
+                            : $"{DiscordEmoji.FromName(Bot.Client, reaction.Emoji.GetDiscordName())} x {reaction.Count}");
+                    }
+                    catch (Exception)
+                    {
+                        reactions.Add($"{reaction.Emoji.GetDiscordName()} x {reaction.Count}");
+                    }
+                }
+                
+                await bmsg.ModifyAsync(string.Join(" • ", reactions));
+                /*
+                bmsg = await e.Channel.Guild.GetChannel(guild.BoardChannel)
+                    .GetMessageAsync(Messages.BoardMessages.Find(x => x.SourceId == msg.Id).BoardId);
+                
+                if (string.IsNullOrEmpty(bmsg.Content))
+                {
+                    
+                    Messages.BoardMessages.Remove(Messages.BoardMessages.Find(x => x.SourceId == e.Message.Id));
+                    Utilities.Con.Open();
+                    using (var cmd =
+                        new SqliteCommand(
+                            $"UPDATE Messages SET sent= 'false', bId = '0' WHERE Messages.id = '{e.Message.Id}'",
+                            Utilities.Con))
+                    {
+                        cmd.ExecuteReader();
+                    }
+
+                    await bmsg.DeleteAsync();
+                    Utilities.Con.Close();
+                }*/
+            }
+        }
+
+        private static DiscordEmbed BuildEmbed(DiscordMessage msg)
+        {
+            var builder = new DiscordEmbedBuilder().AddField("Author", msg.Author.Mention, true)
+                .AddField("Channel", msg.Channel.Mention, true)
+                .WithThumbnailUrl(msg.Author.AvatarUrl)
+                .WithTimestamp(msg.Timestamp)
+                .WithColor(new DiscordColor("420DAB"));
+            //This is needed so that the bot doesn't shit itself if the message was just a picture
+            if (msg.Content != "")
+            {
+                builder.AddField("Message", msg.Content);
+            }
+
+            builder.AddField("Link",
+                $"[Jump to](https://discordapp.com/channels/{msg.Channel.Guild.Id}/{msg.ChannelId}/{msg.Id})");
+            //If there were any attachments, put it into the image field of the embed (apparently it doesn't throw if it's an mp3/4 and I'm okay with that)
+            if (msg.Attachments.Any())
+            {
+                builder.WithImageUrl(msg.Attachments.First().Url);
+            }
+
+            return builder.Build();
+        }
+
+
+        public static async Task CommandErrored(CommandErrorEventArgs e)
+        {
+            await e.Context.RespondAsync($"Error: `{e.Exception.Message}`");
         }
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.Data.Sqlite;
 namespace Meiyounaise.Modules
 {
     [Group("GuildConfig"),Aliases("gc"),Description("Commands for configuring the Emoji Board and join/leave messages in a guild.")]
-    public class GuildConfigModule
+    public class GuildConfigModule : BaseCommandModule
     {
         [Command("joinmsg"),Description("Sets the message that the bot will post if someone joins the guild.")]
         [RequireUserPermissions(Permissions.Administrator)]

@@ -11,14 +11,14 @@ using Microsoft.Data.Sqlite;
 
 namespace Meiyounaise.Modules
 {
-    public class SettingsModule
+    public class SettingsModule : BaseCommandModule
     {
         [Command("status")]
         [Description("Changes the Bot's \"Playing\" Status.")]
         public async Task Status(CommandContext ctx, [RemainingText, Description("The new status.")]
             string status)
         {
-            await ctx.Client.UpdateStatusAsync(new DiscordGame(status));
+            await ctx.Client.UpdateStatusAsync(new DiscordActivity(status,ActivityType.ListeningTo));
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
             Utilities.Con.Open();
             using (var cmd = new SqliteCommand($"INSERT INTO Status VALUES ('{status}');",Utilities.Con))
@@ -51,7 +51,7 @@ namespace Meiyounaise.Modules
         public async Task Nick(CommandContext ctx, [RemainingText, Description("The new Nickname.")]
             string newNick)
         {
-            await ctx.Guild.CurrentMember.ModifyAsync(newNick);
+            await ctx.Guild.CurrentMember.ModifyAsync(x=>x.Nickname= newNick);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
@@ -60,7 +60,7 @@ namespace Meiyounaise.Modules
         {
             var path = $"{Utilities.DataPath}icon.png";
             await Utilities.DownloadAsync(new Uri(url ?? ctx.Message.Attachments.First().Url), path);
-            await ctx.Client.EditCurrentUserAsync(null, new FileStream(path, FileMode.Open));
+            await ctx.Client.UpdateCurrentUserAsync(null, new FileStream(path, FileMode.Open));
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
             File.Delete(path);
         }

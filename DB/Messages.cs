@@ -7,11 +7,11 @@ namespace Meiyounaise.DB
 {
     public class Messages
     {
-        public static Dictionary<ulong, bool> BoardMessages;
+        public static List<Message> BoardMessages;
 
         static Messages()
         {
-            BoardMessages = new Dictionary<ulong, bool>();
+            BoardMessages = new List<Message>();
             Utilities.Con.Open();
             using (var cmd = new SqliteCommand("SELECT * FROM Messages", Utilities.Con))
             {
@@ -19,11 +19,23 @@ namespace Meiyounaise.DB
                 {
                     while (rdr.Read())
                     {
-                        BoardMessages.Add(Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),Convert.ToBoolean(rdr.GetValue(rdr.GetOrdinal("sent"))));
+                        BoardMessages.Add(new Message
+                        {
+                            SourceId = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
+                            BoardId = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("bId"))),
+                            Sent = Convert.ToBoolean(rdr.GetValue(rdr.GetOrdinal("sent")))
+                        });
                     }
                 }
             }
             Utilities.Con.Close();
+        }
+
+        public class Message
+        {
+            public ulong SourceId { get; set; }
+            public ulong BoardId { get; set; }
+            public bool Sent { get; set; }
         }
     }
 }
