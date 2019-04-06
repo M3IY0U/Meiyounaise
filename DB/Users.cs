@@ -31,7 +31,6 @@ namespace Meiyounaise.DB
             Utilities.Con.Close();
         }
 
-        
         public static void UpdateUser(DiscordUser user)
         {
             Utilities.Con.Open();
@@ -54,7 +53,6 @@ namespace Meiyounaise.DB
             Utilities.Con.Close();
         }
         
-        
         public static User GetUser(DiscordUser user)
         {
             var result = from a in UserList
@@ -76,6 +74,4 @@ namespace Meiyounaise.DB
             public ulong Id { get; set; }
         }
     }
-    
-    
 }

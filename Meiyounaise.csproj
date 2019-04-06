@@ -8,6 +8,7 @@
     <ItemGroup>
       <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00586" />
       <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00586" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00586" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.1.0.339" />
       <PackageReference Include="Microsoft.Data.Sqlite" Version="2.2.3" />
     </ItemGroup>

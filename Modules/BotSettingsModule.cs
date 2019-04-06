@@ -55,16 +55,6 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("icon"), Description("Change the Bot's Avatar"), RequireOwner, Hidden]
-        public async Task Icon(CommandContext ctx, string url = null)
-        {
-            var path = $"{Utilities.DataPath}icon.png";
-            await Utilities.DownloadAsync(new Uri(url ?? ctx.Message.Attachments.First().Url), path);
-            await ctx.Client.UpdateCurrentUserAsync(null, new FileStream(path, FileMode.Open));
-            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
-            File.Delete(path);
-        }
-
         [Command("info")]
         public async Task Info(CommandContext ctx)
         {

@@ -103,6 +103,10 @@ namespace Meiyounaise.DB
         public static async Task UserRemoved(GuildMemberRemoveEventArgs e)
         {
             var guild = Guilds.GetGuild(e.Guild);
+            if (guild ==null)
+            {
+                return;
+            }
             //Abort if the guild doesn't have join/leave messages set up
             if (!ShouldSendMessage(guild.LeaveMsg, guild.JlMessageChannel)) return;
 

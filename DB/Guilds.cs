@@ -33,6 +33,7 @@ namespace Meiyounaise.DB
                     }
                 }
             }
+
             Utilities.Con.Close();
         }
 
@@ -45,7 +46,7 @@ namespace Meiyounaise.DB
                 {
                     if (rdr.Read())
                     {
-                       var newGuild = new Guild
+                        var newGuild = new Guild
                         {
                             Id = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
                             BoardChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("boardChannel"))),
@@ -60,6 +61,7 @@ namespace Meiyounaise.DB
                     }
                 }
             }
+
             Utilities.Con.Close();
         }
 
@@ -68,11 +70,16 @@ namespace Meiyounaise.DB
             var result = from a in GuildList
                 where a.Id == guild.Id
                 select a;
-            return result.FirstOrDefault();
+            var enumerable = result.ToList();
+            return enumerable.ToList().Any() ? enumerable.ToList().First() : null;
         }
+
         public class Guild
         {
-            public Guild(){}
+            public Guild()
+            {
+            }
+
             public Guild(ulong id)
             {
                 Id = id;
@@ -83,6 +90,7 @@ namespace Meiyounaise.DB
                 JlMessageChannel = 0;
                 ReactionNeeded = 0;
             }
+
             public string Prefix { get; set; }
             public ulong Id { get; set; }
             public ulong BoardChannel { get; set; }
@@ -92,6 +100,4 @@ namespace Meiyounaise.DB
             public int ReactionNeeded { get; set; }
         }
     }
-    
-    
 }
