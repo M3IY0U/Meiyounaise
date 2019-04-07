@@ -54,13 +54,8 @@ namespace Meiyounaise.Modules
         }
 
         [Command("purge"), Aliases("prune"), RequireUserPermissions(Permissions.ManageMessages), Description("Bulk delete messages")]
-        public async Task Purge(CommandContext ctx, int amount, [Description("If provided will only delete messages by mentioned user")]string user = "")
+        public async Task Purge(CommandContext ctx, int amount, [Description("If provided will only delete messages from this user (Needs to be the user id)")]string user = "")
         {
-            if (user != "" && ctx.Message.MentionedUsers.Count==0)
-            {
-                await ctx.RespondAsync("Please @mention the user whose messages you want to purge.");
-                return;
-            }
             await ctx.Message.DeleteAsync();
             IReadOnlyList<DiscordMessage> messagesToDelete;
             if (user=="")
@@ -72,7 +67,7 @@ namespace Meiyounaise.Modules
                 await toDel.DeleteAsync();
             }else
             {
-                var userToDelete = await ctx.Client.GetUserAsync(ctx.Message.MentionedUsers.First().Id);
+                var userToDelete = await ctx.Client.GetUserAsync(ulong.Parse(user));
                 messagesToDelete = await ctx.Channel.GetMessagesAsync(amount);
                 var filteredMessages = messagesToDelete.ToList();
                 filteredMessages.RemoveAll(x => x.Author.Id != userToDelete.Id);

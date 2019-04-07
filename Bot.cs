@@ -40,7 +40,6 @@ namespace Meiyounaise
                 PrefixResolver= CustomPrefixPredicate
             });
            
-            
             _cnext.RegisterCommands(Assembly.GetEntryAssembly());
             _cnext.CommandErrored += DB.EventHandlers.CommandErrored;
             

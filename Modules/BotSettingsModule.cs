@@ -1,8 +1,7 @@
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -14,7 +13,7 @@ namespace Meiyounaise.Modules
     public class SettingsModule : BaseCommandModule
     {
         [Command("status")]
-        [Description("Changes the Bot's \"Playing\" Status.")]
+        [Description("Changes the Bot's \"Listening to\" Status.")]
         public async Task Status(CommandContext ctx, [RemainingText, Description("The new status.")]
             string status)
         {
@@ -28,7 +27,7 @@ namespace Meiyounaise.Modules
             Utilities.Con.Close();
         }
 
-        [Command("prefix")]
+        [Command("prefix"),RequireUserPermissions(Permissions.ManageGuild)]
         [Description("Set the Bot's Prefix on this guild.")]
         public async Task Prefix(CommandContext ctx, [RemainingText, Description("The new Prefix")] string newPrefix = "")
         {

@@ -256,28 +256,7 @@ namespace Meiyounaise.DB
                         reactions.Add($"{reaction.Emoji.GetDiscordName()} x {reaction.Count}");
                     }
                 }
-                
                 await bmsg.ModifyAsync(string.Join(" • ", reactions));
-                /*
-                bmsg = await e.Channel.Guild.GetChannel(guild.BoardChannel)
-                    .GetMessageAsync(Messages.BoardMessages.Find(x => x.SourceId == msg.Id).BoardId);
-                
-                if (string.IsNullOrEmpty(bmsg.Content))
-                {
-                    
-                    Messages.BoardMessages.Remove(Messages.BoardMessages.Find(x => x.SourceId == e.Message.Id));
-                    Utilities.Con.Open();
-                    using (var cmd =
-                        new SqliteCommand(
-                            $"UPDATE Messages SET sent= 'false', bId = '0' WHERE Messages.id = '{e.Message.Id}'",
-                            Utilities.Con))
-                    {
-                        cmd.ExecuteReader();
-                    }
-
-                    await bmsg.DeleteAsync();
-                    Utilities.Con.Close();
-                }*/
             }
         }
 
@@ -301,10 +280,8 @@ namespace Meiyounaise.DB
             {
                 builder.WithImageUrl(msg.Attachments.First().Url);
             }
-
             return builder.Build();
         }
-
 
         public static async Task CommandErrored(CommandErrorEventArgs e)
         {

@@ -289,14 +289,16 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            //If a name was provided, generate a chart for that user
-            var name = username == "" ? Users.GetUser(ctx.User).Last : username;
-            if (name == null)
+            var user = Users.GetUser(ctx.User);
+            if  (user == null && username == "")
             {
                 await ctx.RespondAsync(
                     $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
                 return;
             }
+            //If a name was provided, generate a chart for that user
+            var name = username == "" ? user?.Last : username;
+
 
             //Get the top 25 albums on last.fm
             var albums = await Client.User.GetTopAlbums(name, (LastStatsTimeSpan) ts, 1, 25);
@@ -368,15 +370,15 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            //If a name was provided, generate a chart for that user
-            var name = username == "" ? Users.GetUser(ctx.User).Last : username;
-
-            if (name == null)
+            var user = Users.GetUser(ctx.User);
+            if  (user == null && username == "")
             {
                 await ctx.RespondAsync(
                     $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
                 return;
             }
+            //If a name was provided, generate a chart for that user
+            var name = username == "" ? user?.Last : username;
 
             //Get the top 25 albums on last.fm
             var artists = await Client.User.GetTopArtists(name, (LastStatsTimeSpan) ts, 1, 25);
