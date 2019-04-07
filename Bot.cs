@@ -62,7 +62,6 @@ namespace Meiyounaise
             return Task.FromResult(-1);
         }
 
-
         public async Task RunAsync()
         {
             await Client.ConnectAsync();

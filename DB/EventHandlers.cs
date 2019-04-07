@@ -89,7 +89,6 @@ namespace Meiyounaise.DB
             await Task.CompletedTask;
         }
 
-
         public static async Task UserJoined(GuildMemberAddEventArgs e)
         {
             var guild = Guilds.GetGuild(e.Guild);

@@ -58,7 +58,6 @@ namespace Meiyounaise.Modules
         [Command("info")]
         public async Task Info(CommandContext ctx)
         {
-            
             var rand = new Random();
             var process = Process.GetCurrentProcess();
             var embed = new DiscordEmbedBuilder()

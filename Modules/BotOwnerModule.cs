@@ -24,8 +24,6 @@ namespace Meiyounaise.Modules
             File.Delete(path);
         }
 
-        
-
         [Command("servers"), RequireOwner, Hidden]
         public async Task Servers(CommandContext ctx)
         {
@@ -61,7 +59,6 @@ namespace Meiyounaise.Modules
                 {
                     cguild += "Couldn't create Invite!";
                 }
-
 
                 result.Add(cguild);
             }
@@ -146,8 +143,70 @@ namespace Meiyounaise.Modules
                 {
                     // ignored
                 }
+
                 await guildToLeave.LeaveAsync();
             }
+        }
+
+        [Command("sql"), RequireOwner, Hidden]
+        public async Task ExecuteSql(CommandContext ctx, [RemainingText] string sql)
+        {
+            Utilities.Con.Open();
+            if (sql.ToLower().Contains("select"))
+            {
+                var names = new List<string>();
+                var rows = new List<string>();
+                try
+                {
+                    using (var cmd = new SqliteCommand(sql, Utilities.Con))
+                    {
+                        using (var rdr = cmd.ExecuteReader())
+                        {
+                            for (var i = 0; i < rdr.FieldCount; i++)
+                            {
+                                names.Add($"**{rdr.GetName(i)}**");
+                            }
+
+                            while (rdr.Read())
+                            {
+                                var toAdd = new List<string>();
+                                for (var i = 0; i < rdr.FieldCount; i++)
+                                {
+                                    toAdd.Add(Convert.ToString(rdr.GetValue(i)));
+                                }
+
+                                rows.Add(string.Join(" - ", toAdd));
+                            }
+                        }
+
+                        await ctx.RespondAsync($"{string.Join(" - ", names)}\n{string.Join("\n", rows)}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    await ctx.RespondAsync(e.Message);
+                    Utilities.Con.Close();
+                    return;
+                }
+            }
+            else
+            {
+                try
+                {
+                    using (var cmd = new SqliteCommand(sql, Utilities.Con))
+                    {
+                        cmd.ExecuteReader();
+                    }
+                    await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+                }
+                catch (Exception e)
+                {
+                    await ctx.RespondAsync(e.Message);
+                    Utilities.Con.Close();
+                    return;
+                }
+            }
+            Utilities.Con.Close();
         }
     }
 }

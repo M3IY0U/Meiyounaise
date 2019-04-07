@@ -72,7 +72,6 @@ namespace Meiyounaise.Modules
                 await toDel.DeleteAsync();
             }else
             {
-                
                 var userToDelete = await ctx.Client.GetUserAsync(ctx.Message.MentionedUsers.First().Id);
                 messagesToDelete = await ctx.Channel.GetMessagesAsync(amount);
                 var filteredMessages = messagesToDelete.ToList();
