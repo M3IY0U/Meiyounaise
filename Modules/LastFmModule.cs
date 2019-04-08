@@ -299,7 +299,6 @@ namespace Meiyounaise.Modules
             //If a name was provided, generate a chart for that user
             var name = username == "" ? user?.Last : username;
 
-
             //Get the top 25 albums on last.fm
             var albums = await Client.User.GetTopAlbums(name, (LastStatsTimeSpan) ts, 1, 25);
             if (!albums.Success)
