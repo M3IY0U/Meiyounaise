@@ -14,6 +14,7 @@ using IF.Lastfm.Core.Api.Enums;
 using IF.Lastfm.Core.Objects;
 using Meiyounaise.DB;
 using Microsoft.Data.Sqlite;
+using Newtonsoft.Json;
 
 namespace Meiyounaise.Modules
 {
@@ -77,7 +78,7 @@ namespace Meiyounaise.Modules
         {
             if (username == "")
             {
-                if (username == "#" || !Users.UserList.Any(x => x.Id == ctx.User.Id))
+                if (username == "#" || Users.UserList.All(x => x.Id != ctx.User.Id))
                 {
                     await ctx.RespondAsync(
                         "I don't have a last.fm name linked to your discord account. Set it using `fm set [Name]`.");
@@ -214,7 +215,51 @@ namespace Meiyounaise.Modules
             return html;
         }
 
-        private int ConvertTimeSpan(string timespan)
+        private static string GenerateHtml(IEnumerable<Track> tracks, string html, string option)
+        {
+            var counter = 0;
+            var playCount = "";
+            foreach (var track in tracks)
+            {
+                switch (option.ToLower())
+                {
+                    case "all":
+                        if (track.PlayCount!=0)
+                            playCount = track.PlayCount + " Plays";
+                        html += track.Image.Find(x=>x.Size==Size.Large).Text != null
+                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{track.Image.Find(x=>x.Size==Size.Large).Text}\"><p style=\"position:absolute;top:-12px;left:4px;\">{track.Artist.Name} -<br>{track.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{track.Artist.Name} -<br>{track.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                        break;
+                    case "names":
+                        html += track.Image.Find(x=>x.Size==Size.Large).Text != null
+                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{track.Image.Find(x=>x.Size==Size.Large).Text}\"><p style=\"position:absolute;top:-12px;left:4px;\">{track.Artist.Name} -<br>{track.Name}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{track.Artist.Name} -<br>{track.Name}</p></div>";
+                        break;
+                    case "blank":
+                        html += track.Image.Find(x=>x.Size==Size.Large).Text != null
+                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{track.Image.Find(x=>x.Size==Size.Large).Text}\"></div>"
+                            : "<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"></div>";
+                        break;
+                    case "plays":
+                        if (track.PlayCount != 0)
+                            playCount = track.PlayCount + " Plays";
+                        html += track.Image.Find(x=>x.Size==Size.Large).Text != null
+                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{track.Image.Find(x=>x.Size==Size.Large).Text}\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                        break;
+                    default:
+                        throw new Exception($"`{option}` is not a valid Option");
+                }
+                
+                if (++counter % 5 != 0) continue;
+                html += "<br>";
+                counter = 0;
+            }
+
+            return html;
+        }
+        
+        private static int ConvertTimeSpan(string timespan)
         {
             switch (timespan.ToLower())
             {
@@ -265,7 +310,7 @@ namespace Meiyounaise.Modules
             [Description("Available timespans: overall, year, half, quarter, month and week")]
             string timespan = "", [Description("Available options: all, names, plays, blank")]
             string option = "all",
-            [Description("The username whose artistchart you want to generate. Leave blank for own account.")]
+            [Description("The username whose albumchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
             var id = Guid.NewGuid();
@@ -420,6 +465,124 @@ namespace Meiyounaise.Modules
             DeleteCharts(thisChart.Id);
         }
 
+        [Command("songchart")]
+        [Description("Returns an image of your top songs scrobbled on last.fm.")]
+        public async Task GenerateSongChart(CommandContext ctx,
+            [Description("Available Timespans: overall, year, half, quarter, month and week")]
+            string timespan = "overall", [Description("Available Options: all, names, plays, blank")]
+            string option = "all",
+            [Description("The username whose songchart you want to generate. Leave blank for own account.")]
+            string username = "")
+        {
+            var id = Guid.NewGuid();
+            var thisChart = new Chart
+            {
+                Id = id.ToString(),
+                User = ctx.User.Mention
+            };
+            //Trigger typing to let the user know we're generating his chart
+            await ctx.TriggerTypingAsync();
+            //Last.fm timespans are weird so we have to convert it
+            
+            var user = Users.GetUser(ctx.User);
+            if  (user == null && username == "")
+            {
+                await ctx.RespondAsync(
+                    $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
+                return;
+            }
+            //If a name was provided, generate a chart for that user
+            var name = username == "" ? user?.Last : username;
+
+            //Get the top 25 albums on last.fm
+            SongResponse songs;
+            try
+            {
+                songs = await GetTopTracks(timespan, name);
+            }
+            catch (Exception e)
+            {
+                await ctx.RespondAsync(e.Message);
+                return;
+            }
+            
+            if (songs == null)
+            {
+                if (username == "")
+                {
+                    await ctx.RespondAsync("last.fm's response was not successful, try again later!");
+                }
+                else
+                {
+                    await ctx.RespondAsync(
+                        $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+                }
+                return;
+            }
+
+            if (songs.Toptracks.Track.Count==0)
+            {
+                await ctx.RespondAsync("You didn't listen to any artists yet!");
+                return;
+            }
+
+            try
+            {
+                File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",GenerateHtml(songs.Toptracks.Track, HtmlTemplate, option));
+            }
+            catch (Exception e)
+            {
+                await ctx.RespondAsync(e.Message);
+                return;
+            }
+
+            await GenerateImage(songs.Toptracks.Track.Count >= 5 ? "--width 870" : $"--width {songs.Toptracks.Track.Count * 174}",
+                $"--height {CalcHeight(songs.Toptracks.Track.Count)}", thisChart);
+
+            await ctx.Channel.SendFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
+                $"Requested by: {thisChart.User}");
+            DeleteCharts(thisChart.Id);
+        }
+
+
+        private static async Task<SongResponse> GetTopTracks(string timespan, string user)
+        {
+         
+            switch (timespan.ToLower())
+            {
+                case "":
+                case "overall":
+                    break;
+                case "week":
+                    timespan = "7day";
+                    break;
+                case "month":
+                    timespan = "1month";
+                    break;
+                case "quarter":
+                    timespan = "3month";
+                    break;
+                case "half":
+                    timespan = "6month";
+                    break;
+                case "year":
+                    timespan = "12month";
+                    break;
+                default:
+                    throw new Exception(
+                        "Couldn't convert timespan! Try using `help fm [artist/album/song]chart` to get more info.");
+            }
+            var rParams =
+                $"/2.0/?method=user.gettoptracks&user={user}&api_key={Utilities.GetKey("lastkey")}&format=json&limit=25&period={timespan}";
+            var httpClient = new HttpClient {BaseAddress = new Uri("http://ws.audioscrobbler.com")};
+            var response = await httpClient.GetAsync(rParams);
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<SongResponse>(json);
+
+        }
+        
+        
+        
         private static string CalcHeight(int amount)
         {
             return Convert.ToString(((amount - 1) / 5 + 1) * 174); 
