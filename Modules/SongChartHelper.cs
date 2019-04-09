@@ -6,13 +6,13 @@ using Newtonsoft.Json.Converters;
 
 namespace Meiyounaise.Modules
 {
-    public partial class SongResponse
+    public class SongResponse
     {
         [JsonProperty("toptracks")]
         public Toptracks Toptracks { get; set; }
     }
 
-    public partial class Toptracks
+    public class Toptracks
     {
         [JsonProperty("@attr")]
         public ToptracksAttr Attr { get; set; }
@@ -21,7 +21,7 @@ namespace Meiyounaise.Modules
         public List<Track> Track { get; set; }
     }
 
-    public partial class ToptracksAttr
+    public class ToptracksAttr
     {
         [JsonProperty("page")]
         [JsonConverter(typeof(ParseStringConverter))]
@@ -43,7 +43,7 @@ namespace Meiyounaise.Modules
         public long TotalPages { get; set; }
     }
 
-    public partial class Track
+    public class Track
     {
         [JsonProperty("@attr")]
         public TrackAttr Attr { get; set; }
@@ -75,7 +75,7 @@ namespace Meiyounaise.Modules
         public Uri Url { get; set; }
     }
 
-    public partial class Artist
+    public class Artist
     {
         [JsonProperty("url")]
         public Uri Url { get; set; }
@@ -87,14 +87,14 @@ namespace Meiyounaise.Modules
         public string Mbid { get; set; }
     }
 
-    public partial class TrackAttr
+    public class TrackAttr
     {
         [JsonProperty("rank")]
         [JsonConverter(typeof(ParseStringConverter))]
         public long Rank { get; set; }
     }
 
-    public partial class Image
+    public class Image
     {
         [JsonProperty("size")]
         public Size Size { get; set; }
@@ -103,7 +103,7 @@ namespace Meiyounaise.Modules
         public Uri Text { get; set; }
     }
 
-    public partial class Streamable
+    public class Streamable
     {
         [JsonProperty("fulltrack")]
         [JsonConverter(typeof(ParseStringConverter))]
@@ -114,7 +114,7 @@ namespace Meiyounaise.Modules
         public long Text { get; set; }
     }
 
-    public enum Size { Extralarge, Large, Medium, Small };
+    public enum Size { Extralarge, Large, Medium, Small }
 
     internal static class Converter
     {
@@ -126,7 +126,7 @@ namespace Meiyounaise.Modules
             {
                 SizeConverter.Singleton,
                 new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            },
+            }
         };
     }
 
@@ -155,7 +155,6 @@ namespace Meiyounaise.Modules
             }
             var value = (long)untypedValue;
             serializer.Serialize(writer, value.ToString());
-            return;
         }
 
         public static readonly ParseStringConverter Singleton = new ParseStringConverter();

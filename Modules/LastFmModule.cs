@@ -544,10 +544,8 @@ namespace Meiyounaise.Modules
             DeleteCharts(thisChart.Id);
         }
 
-
         private static async Task<SongResponse> GetTopTracks(string timespan, string user)
-        {
-         
+        { 
             switch (timespan.ToLower())
             {
                 case "":
@@ -580,8 +578,6 @@ namespace Meiyounaise.Modules
             return JsonConvert.DeserializeObject<SongResponse>(json);
 
         }
-        
-        
         
         private static string CalcHeight(int amount)
         {
