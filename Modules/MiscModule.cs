@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -59,9 +58,9 @@ namespace Meiyounaise.Modules
         public async Task Someone(CommandContext ctx, [RemainingText] string input = "")
         {
             var rand = new Random();
-            var users = ctx.Guild.Members;
-            var result = (from user in users where user.Value.Presence.Status != UserStatus.Offline && !user.Value.IsBot select user.Value.Nickname ?? user.Value.Username).ToList();
-            await ctx.RespondAsync($"{Cool.Face} {result[rand.Next(result.Count)]} {input}");
+            var users = ctx.Guild.Members.Values;
+            var result = users.Where(x => !x.IsBot && x.Presence != null).ToList();
+            await ctx.RespondAsync($"{Cool.Face} {result[rand.Next(result.Count)].Username} {input}");
         }
         
         [Command("ping"), Description("Returns the Bot's Latencies.")]

@@ -73,7 +73,7 @@ namespace Meiyounaise.Modules
          Description("Bulk delete messages")]
         public async Task Purge(CommandContext ctx, int amount,
             [Description("If provided will only delete messages from this user (Needs to be the user id)")]
-            DiscordUser user)
+            DiscordUser user = null)
         {
             await ctx.Message.DeleteAsync();
             IReadOnlyList<DiscordMessage> messagesToDelete;
