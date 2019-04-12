@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using DSharpPlus.CommandsNext;
@@ -27,6 +28,9 @@ namespace Meiyounaise.Modules
         [Command("servers"), RequireOwner, Hidden]
         public async Task Servers(CommandContext ctx)
         {
+            await ctx.RespondAsync("Hang on, this could take a while");
+            var sw = new Stopwatch();
+            sw.Start();
             var result = new List<string>();
             foreach (var guild in ctx.Client.Guilds)
             {
@@ -34,41 +38,43 @@ namespace Meiyounaise.Modules
                 try
                 {
                     var invs = await guild.Value.GetInvitesAsync();
-                    if (invs.Count == 0)
-                    {
-                        foreach (var chn in guild.Value.Channels)
-                        {
-                            try
-                            {
-                                cguild += await chn.Value.CreateInviteAsync();
-                                break;
-                            }
-                            catch (Exception)
-                            {
-                                cguild += "Couldn't create Invite!";
-                                break;
-                            }
-                        }
-                    }
-                    else
+                    if (invs.Count != 0)
                     {
                         cguild += invs.First();
                     }
                 }
                 catch (Exception)
                 {
-                    cguild += "Couldn't create Invite!";
+                    var createdInvite = false;
+                    foreach (var chn in guild.Value.Channels)
+                    {
+                        try
+                        {
+                            cguild += await chn.Value.CreateInviteAsync();
+                            createdInvite = true;
+                            break;
+                        }
+                        catch (Exception)
+                        {
+                            // ignored
+                        }
+                    }
+                    if (!createdInvite)
+                    {
+                        cguild += "Couldn't create Invite!";
+                    }
                 }
 
                 result.Add(cguild);
             }
+            sw.Stop();
 
             var resultstring = string.Join("\n", result);
             if (resultstring.Length < 2048)
             {
                 var embed = new DiscordEmbedBuilder()
                     .WithDescription(resultstring);
-                await ctx.RespondAsync(embed: embed.Build());
+                await ctx.RespondAsync($"{ctx.User.Mention}: Took {Math.Round(sw.Elapsed.TotalSeconds)}s", embed: embed.Build());
             }
             else
             {
@@ -197,6 +203,7 @@ namespace Meiyounaise.Modules
                     {
                         cmd.ExecuteReader();
                     }
+
                     await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
                 }
                 catch (Exception e)
@@ -206,6 +213,7 @@ namespace Meiyounaise.Modules
                     return;
                 }
             }
+
             Utilities.Con.Close();
         }
     }

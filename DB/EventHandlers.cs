@@ -102,10 +102,11 @@ namespace Meiyounaise.DB
         public static async Task UserRemoved(GuildMemberRemoveEventArgs e)
         {
             var guild = Guilds.GetGuild(e.Guild);
-            if (guild ==null)
+            if (guild == null)
             {
                 return;
             }
+
             //Abort if the guild doesn't have join/leave messages set up
             if (!ShouldSendMessage(guild.LeaveMsg, guild.JlMessageChannel)) return;
 
@@ -224,7 +225,7 @@ namespace Meiyounaise.DB
                 }
             }
         }
-        
+
         public static async Task ReactionRemoved(MessageReactionRemoveEventArgs e)
         {
             var guild = Guilds.GetGuild(e.Message.Channel.Guild);
@@ -256,6 +257,7 @@ namespace Meiyounaise.DB
                         reactions.Add($"{reaction.Emoji.GetDiscordName()} x {reaction.Count}");
                     }
                 }
+
                 await bmsg.ModifyAsync(string.Join(" • ", reactions));
             }
         }
@@ -280,12 +282,61 @@ namespace Meiyounaise.DB
             {
                 builder.WithImageUrl(msg.Attachments.First().Url);
             }
+
             return builder.Build();
         }
 
         public static async Task CommandErrored(CommandErrorEventArgs e)
         {
             await e.Context.RespondAsync($"Error: `{e.Exception.Message}`");
+        }
+
+        public static async Task MessageCreated(MessageCreateEventArgs e)
+        {
+            //Bots don't count
+            if (e.Message.Author.IsBot) return;
+            //Check if guild has the "feature" enabled
+            if (Guilds.GetGuild(e.Guild).PrevMessageAmount == 0) return;
+            //Put current guild the message was received in into variable
+            var guild = Guilds.GetGuild(e.Guild);
+        
+            //Add channel if it isn't already in the dictionary
+            if (!guild.PrevMessages.ContainsKey(e.Channel.Id))
+            {
+                guild.PrevMessages.TryAdd(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(e.Message, 0));
+            }
+        
+            var (_, value) = guild.PrevMessages[e.Channel.Id];
+        
+            if (guild.PrevMessages[e.Channel.Id].Key == null)
+            {
+                guild.PrevMessages.TryUpdate(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(e.Message, 1),
+                    guild.PrevMessages[e.Channel.Id]);
+                return;
+            }
+        
+            //Check for the same content
+            if (guild.PrevMessages[e.Channel.Id].Key.Content == e.Message.Content &&
+                guild.PrevMessages[e.Channel.Id].Key.Author != e.Message.Author)
+            {
+                //Update the Count
+                guild.PrevMessages.TryUpdate(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(e.Message, value + 1),
+                    guild.PrevMessages[e.Channel.Id]);
+            }
+            else
+            {
+                //Set count to 0 and update last message
+                guild.PrevMessages.TryUpdate(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(e.Message, 1),
+                    guild.PrevMessages[e.Channel.Id]);
+            }
+        
+            if (guild.PrevMessages[e.Channel.Id].Value >= guild.PrevMessageAmount)
+            {
+                //Send message and reset count/last message
+                await e.Channel.SendMessageAsync(e.Message.Content);
+                guild.PrevMessages.TryUpdate(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(null, 1),
+                    guild.PrevMessages[e.Channel.Id]);
+            }
         }
     }
 }

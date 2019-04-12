@@ -7,6 +7,7 @@ using CoolAsciiFaces;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Meiyounaise.DB;
 
 namespace Meiyounaise.Modules
 {

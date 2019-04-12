@@ -12,6 +12,18 @@ namespace Meiyounaise.Modules
 {
     public class MessageModule : BaseCommandModule
     {
+        private static async Task TryDeleteMessage(DiscordMessage msg)
+        {
+            try
+            {
+                await msg.DeleteAsync();
+            }
+            catch (Exception)
+            {
+                // ignored lmao
+            }
+        }
+    
         [Command("say"), RequireOwner, Hidden]
         public async Task Say(CommandContext ctx, [RemainingText] string text)
         {
@@ -32,8 +44,8 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await g.DeleteAsync();
-            await gResponse.Message.DeleteAsync();
+            await TryDeleteMessage(g);
+            await TryDeleteMessage(gResponse.Message);
 
             if (gResponse.Message.Content.ToLower() == "abort")
             {
@@ -57,19 +69,19 @@ namespace Meiyounaise.Modules
             var cResponse = await interactivity.WaitForMessageAsync(x => x.Author == ctx.User);
             if (cResponse.Message.Content.ToLower() == "abort")
             {
-                await c.DeleteAsync();
-                await cResponse.Message.DeleteAsync();
+                await TryDeleteMessage(c);
+                await TryDeleteMessage(cResponse.Message);
                 return;
             }
 
             var targetChannel = channels[Convert.ToInt32(cResponse.Message.Content)];
             await targetChannel.SendMessageAsync(text);
-            await c.DeleteAsync();
-            await cResponse.Message.DeleteAsync();
+            await TryDeleteMessage(c);
+            await TryDeleteMessage(cResponse.Message);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("✅"));
         }
 
-        [Command("purge"), Aliases("prune"), RequireUserPermissions(Permissions.ManageMessages),
+        [Command("purge"), Aliases("prune"), RequireUserPermissions(Permissions.ManageMessages),RequireBotPermissions(Permissions.ManageMessages),
          Description("Bulk delete messages")]
         public async Task Purge(CommandContext ctx, int amount,
             [Description("If provided will only delete messages from this user (Needs to be the user id)")]

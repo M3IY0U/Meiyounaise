@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus;
@@ -182,6 +183,31 @@ namespace Meiyounaise.Modules
             Utilities.Con.Open();
             using (var cmd = new SqliteCommand($"UPDATE Guilds SET leaveMsg='{lm}' WHERE Guilds.id = '{ctx.Guild.Id}'",
                 Utilities.Con))
+            {
+                cmd.ExecuteReader();
+            }
+
+            Utilities.Con.Close();
+            Guilds.UpdateGuild(ctx.Guild);
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+        }
+        
+        [Command("repeatmsg"),
+         Description("Sets the required amount messages needed to repeat it.")]
+        [RequireUserPermissions(Permissions.Administrator)]
+        public async Task RepeatMsg(CommandContext ctx,[Description("The amount of messages that need to have the same content. Set to 0 to disable.")]string amount = "")
+        {
+            if (amount == "")
+            {
+                await ctx.RespondAsync(
+                    $"If {Guilds.GetGuild(ctx.Guild).PrevMessageAmount} messages in a row have the same content, the bot will repeat it");
+                return;
+            }
+
+            Utilities.Con.Open();
+            using (var cmd =
+                new SqliteCommand($"UPDATE Guilds SET prevMessageAmount = '{int.Parse(amount)}' WHERE Guilds.id = '{ctx.Guild.Id}'",
+                    Utilities.Con))
             {
                 cmd.ExecuteReader();
             }

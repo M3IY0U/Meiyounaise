@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using DSharpPlus.Entities;
@@ -14,7 +15,7 @@ namespace Meiyounaise.DB
         {
             GuildList = new List<Guild>();
             Utilities.Con.Open();
-            using (var cmd = new SqliteCommand("SELECT * FROM Guilds", Utilities.Con))
+            using (var cmd = new SqliteCommand($"SELECT * FROM Guilds", Utilities.Con))
             {
                 using (var rdr = cmd.ExecuteReader())
                 {
@@ -28,12 +29,14 @@ namespace Meiyounaise.DB
                             JoinMsg = rdr.GetString(rdr.GetOrdinal("joinMsg")),
                             LeaveMsg = rdr.GetString(rdr.GetOrdinal("leaveMsg")),
                             JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
-                            ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded"))
+                            ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded")),
+                            PrevMessageAmount = Convert.ToInt32(rdr.GetValue(rdr.GetOrdinal("prevMessageAmount"))),
+                            PrevMessages = new ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>>()
                         });
                     }
                 }
             }
-
+            
             Utilities.Con.Close();
         }
 
@@ -54,7 +57,9 @@ namespace Meiyounaise.DB
                             JoinMsg = rdr.GetString(rdr.GetOrdinal("joinMsg")),
                             LeaveMsg = rdr.GetString(rdr.GetOrdinal("leaveMsg")),
                             JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
-                            ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded"))
+                            ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded")),
+                            PrevMessageAmount = Convert.ToInt32(rdr.GetValue(rdr.GetOrdinal("prevMessageAmount"))),
+                            PrevMessages = new ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>>()
                         };
                         GuildList.Remove(GetGuild(guild));
                         GuildList.Add(newGuild);
@@ -89,8 +94,12 @@ namespace Meiyounaise.DB
                 LeaveMsg = "empty";
                 JlMessageChannel = 0;
                 ReactionNeeded = 0;
+                PrevMessageAmount = 0;
+                PrevMessages = new ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>>();
             }
 
+            public int PrevMessageAmount { get; set; }
+            public ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>> PrevMessages { get; set; }
             public string Prefix { get; set; }
             public ulong Id { get; set; }
             public ulong BoardChannel { get; set; }
