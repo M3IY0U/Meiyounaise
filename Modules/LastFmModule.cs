@@ -80,9 +80,8 @@ namespace Meiyounaise.Modules
             {
                 if (username == "#" || Users.UserList.All(x => x.Id != ctx.User.Id))
                 {
-                    await ctx.RespondAsync(
+                    throw new Exception(
                         "I don't have a last.fm name linked to your discord account. Set it using `fm set [Name]`.");
-                    return;
                 }
 
                 username = Users.GetUser(ctx.User).Last;
@@ -93,15 +92,11 @@ namespace Meiyounaise.Modules
             {
                 if (username == "")
                 {
-                    await ctx.RespondAsync("last.fm's response was not successful, try again later!");
+                    throw new Exception("last.fm's response was not successful, try again later!");
                 }
-                else
-                {
-                    await ctx.RespondAsync(
-                        $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
-                }
+                throw new Exception(
+                    $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
 
-                return;
             }
 
             var info = await Client.User.GetInfoAsync(username);

@@ -23,7 +23,8 @@ namespace Meiyounaise.DB
                         UserList.Add(new User
                         {
                             Id = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
-                            Last = rdr.GetString(rdr.GetOrdinal("lastfm"))
+                            Last = rdr.GetString(rdr.GetOrdinal("lastfm")),
+                            Osu = rdr.GetString(rdr.GetOrdinal("osu"))
                         });
                     }
                 }
@@ -43,7 +44,8 @@ namespace Meiyounaise.DB
                         var newGuild = new User
                         {
                             Id = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("id"))),
-                            Last = rdr.GetString(rdr.GetOrdinal("lastfm"))
+                            Last = rdr.GetString(rdr.GetOrdinal("lastfm")),
+                            Osu = rdr.GetString(rdr.GetOrdinal("osu"))
                         };
                         UserList.Remove(GetUser(user));
                         UserList.Add(newGuild);
@@ -68,8 +70,10 @@ namespace Meiyounaise.DB
             {
                 Id = id;
                 Last = null;
+                Osu = null;
             }
             public string Last { get; set; }
+            public string Osu { get; set; }
             public ulong Id { get; set; }
         }
     }

@@ -288,7 +288,29 @@ namespace Meiyounaise.DB
 
         public static async Task CommandErrored(CommandErrorEventArgs e)
         {
-            await e.Context.RespondAsync($"Error: `{e.Exception.Message}`");
+            var eb = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Red)
+                .WithAuthor("Command Execution failed!", iconUrl: "https://www.shareicon.net/data/128x128/2016/08/18/810028_close_512x512.png")
+                .WithDescription(e.Exception.Message);
+
+            if (e.Exception.Message.Contains("pre-execution checks failed"))
+            {
+                var checks = new List<string>();
+                foreach (var check in e.Command.ExecutionChecks)
+                {
+                    
+                    if (!await check.ExecuteCheckAsync(e.Context, false))
+                    {
+                        checks.Add(check.ToString().Substring(check.ToString().LastIndexOf(".", StringComparison.Ordinal)+1).Replace("Attribute", string.Empty));
+                    }
+                }
+                eb.AddField("Failed Pre-Execution checks:", string.Join(", ", checks));
+            }
+            if (e.Exception.InnerException!=null)
+            {
+                eb.AddField("Inner Exception:", e.Exception.InnerException.Message);
+            }
+            await e.Context.RespondAsync(embed: eb.Build());
         }
 
         public static async Task MessageCreated(MessageCreateEventArgs e)

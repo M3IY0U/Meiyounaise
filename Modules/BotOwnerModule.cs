@@ -6,9 +6,12 @@ using System.Linq;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using Meiyounaise.DB;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Data.Sqlite;
 
 namespace Meiyounaise.Modules
@@ -59,6 +62,7 @@ namespace Meiyounaise.Modules
                             // ignored
                         }
                     }
+
                     if (!createdInvite)
                     {
                         cguild += "Couldn't create Invite!";
@@ -67,6 +71,7 @@ namespace Meiyounaise.Modules
 
                 result.Add(cguild);
             }
+
             sw.Stop();
 
             var resultstring = string.Join("\n", result);
@@ -74,7 +79,8 @@ namespace Meiyounaise.Modules
             {
                 var embed = new DiscordEmbedBuilder()
                     .WithDescription(resultstring);
-                await ctx.RespondAsync($"{ctx.User.Mention}: Took {Math.Round(sw.Elapsed.TotalSeconds)}s", embed: embed.Build());
+                await ctx.RespondAsync($"{ctx.User.Mention}: Took {Math.Round(sw.Elapsed.TotalSeconds)}s",
+                    embed: embed.Build());
             }
             else
             {
@@ -215,6 +221,34 @@ namespace Meiyounaise.Modules
             }
 
             Utilities.Con.Close();
+        }
+
+        [Command("execute"), Aliases("exec", "run"), RequireOwner, Hidden]
+        public async Task Eval(CommandContext ctx, [RemainingText] string input)
+        {
+            var globals = new Globals
+            {
+                Client = Bot.Client, Ctx = ctx
+            };
+            try
+            {
+                await CSharpScript.EvaluateAsync(input.Trim('`'), ScriptOptions.Default.WithReferences(typeof(System.Net.Dns).Assembly), globals);
+            }
+            catch (Exception)
+            {
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                throw;
+            }
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+        
+        public class Globals
+        {
+            public CommandContext Ctx;
+            public DiscordClient Client;
         }
     }
 }
