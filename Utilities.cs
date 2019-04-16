@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Meiyounaise.DB;
 using Microsoft.Data.Sqlite;
 
 namespace Meiyounaise
@@ -38,6 +39,31 @@ namespace Meiyounaise
                     return result;
                 }
             }
+        }
+
+        public static string ResolveName(string service, DiscordUser user)
+        {
+            var rUser = Users.GetUser(user);
+            if (rUser == null) throw new Exception("Username could not be resolved");
+            string result;
+            switch (service)
+            {
+                case "osu":
+                    result = rUser.Osu;
+                    break;
+                case "last":
+                    result= rUser.Last;
+                    break;
+                default:
+                    throw new Exception("Unknown service provided!");
+            }
+
+            if (result == "#")
+            {
+                throw new Exception("No username set for the requested service!");
+            }
+
+            return result;
         }
 
         public static async Task DownloadAsync(Uri requestUri, string filename)

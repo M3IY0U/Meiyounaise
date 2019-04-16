@@ -29,8 +29,8 @@ namespace Meiyounaise.Modules
                     throw new Exception(
                         "I don't have an osu username linked to your discord account. Set it using `osu set [Name]`.");
                 }
-                username = Users.GetUser(ctx.User).Osu;
-                if(username == "#") throw new Exception("I don't have an osu username linked to your discord account. Set it using `osu set [Name]`.");
+
+                username = Utilities.ResolveName("osu", ctx.User);
             }
             var user = osuApi.GetUserByName(username);
             if (user == null)
@@ -52,13 +52,7 @@ namespace Meiyounaise.Modules
         {
             if (ownAcc == "")
             {
-                if (Users.UserList.All(x => x.Id != ctx.User.Id))
-                {
-                    await ctx.RespondAsync(
-                        "I don't have a last.fm name linked to your discord account. Set it using `fm set [Name]`.");
-                    return;
-                }
-                ownAcc = Users.GetUser(ctx.User).Osu;
+                ownAcc = Utilities.ResolveName("osu", ctx.User);
             }
             var ou1 = osuApi.GetUserByName(toComp);
             var ou2 = osuApi.GetUserByName(ownAcc);
@@ -86,7 +80,7 @@ namespace Meiyounaise.Modules
         
         [Command("set")]
         [Description("Set your osu username.")]
-        public async Task FmSet(CommandContext ctx, string username = "")
+        public async Task OsuSet(CommandContext ctx, string username = "")
         {
             if (username == "")
             {
