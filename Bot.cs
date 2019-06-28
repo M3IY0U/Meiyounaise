@@ -13,7 +13,7 @@ namespace Meiyounaise
     {
         public static DiscordClient Client;
         private CommandsNextExtension _cnext;
-        public  static InteractivityExtension Interactivity;
+        public static InteractivityExtension Interactivity;
         private CancellationTokenSource _cts;
 
         public Bot()
@@ -27,22 +27,22 @@ namespace Meiyounaise
                 UseInternalLogHandler = true
             });
 
-            Interactivity= Client.UseInteractivity(new InteractivityConfiguration());
-            
+            Interactivity = Client.UseInteractivity(new InteractivityConfiguration());
+
             _cts = new CancellationTokenSource();
-            
+
             _cnext = Client.UseCommandsNext(new CommandsNextConfiguration
             {
                 CaseSensitive = false,
                 EnableDefaultHelp = true,
                 EnableDms = false,
                 EnableMentionPrefix = true,
-                PrefixResolver= CustomPrefixPredicate
+                PrefixResolver = CustomPrefixPredicate
             });
-           
+
             _cnext.RegisterCommands(Assembly.GetEntryAssembly());
             _cnext.CommandErrored += DB.EventHandlers.CommandErrored;
-            
+
             Client.Ready += DB.EventHandlers.Ready;
             Client.GuildCreated += DB.EventHandlers.GuildCreated;
             Client.GuildMemberAdded += DB.EventHandlers.UserJoined;
@@ -52,14 +52,10 @@ namespace Meiyounaise
             Client.MessageCreated += DB.EventHandlers.MessageCreated;
         }
 
-        private Task<int> CustomPrefixPredicate(DiscordMessage msg)
+        private static Task<int> CustomPrefixPredicate(DiscordMessage msg)
         {
             var guild = DB.Guilds.GetGuild(msg.Channel.Guild);
-            if (msg.Content.StartsWith(guild.Prefix))
-            {
-                return Task.FromResult(guild.Prefix.Length);
-            }
-            return Task.FromResult(-1);
+            return msg.Content.StartsWith(guild.Prefix) ? Task.FromResult(guild.Prefix.Length) : Task.FromResult(-1);
         }
 
         public async Task RunAsync()
@@ -67,13 +63,13 @@ namespace Meiyounaise
             await Client.ConnectAsync();
             await WaitForCancellationAsync();
         }
-        
+
         private async Task WaitForCancellationAsync()
         {
-            while(!_cts.IsCancellationRequested)
+            while (!_cts.IsCancellationRequested)
                 await Task.Delay(500);
         }
-        
+
         public void Dispose()
         {
             Client.Dispose();

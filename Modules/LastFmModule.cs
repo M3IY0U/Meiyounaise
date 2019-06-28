@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -69,8 +71,7 @@ namespace Meiyounaise.Modules
 
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
-
-        //Normal fm
+        
         [GroupCommand]
         public async Task Fm(CommandContext ctx,
             [Description("The user you want to see the last track of. Leave empty for own account.")]
@@ -166,27 +167,20 @@ namespace Meiyounaise.Modules
             return html;
         }
 
-        private static async Task<string> GenerateHtml(IEnumerable<LastArtist> artists, string html, string option)
+        private static string GenerateHtml(IEnumerable<LastArtist> artists, string html, string option)
         {
             var counter = 0;
             var playCount = "";
             foreach (var artist in artists)
             {
-                var imageUrl = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
-                try
-                {
-                    imageUrl = await GetArtistImage(artist.Mbid);
-                }
-                catch (Exception)
-                {
-                    //ignored
-                }
+                var imageUrl = ScrapeImage(artist);
                 switch (option.ToLower())
                 {
                     case "all":
                         if (artist.PlayCount.HasValue)
                             playCount = artist.PlayCount.Value + " Plays";
-                        html += $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\" width=174 height=174><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                        html +=
+                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\" width=174 height=174><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     case "names":
                         html +=
@@ -313,7 +307,7 @@ namespace Meiyounaise.Modules
             var thisChart = new Chart
             {
                 Id = id.ToString(),
-                User = ctx.User.Username + "#" + ctx.User.Discriminator
+                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
             };
             //Trigger typing to let the user know we're generating his chart
             await ctx.TriggerTypingAsync();
@@ -378,9 +372,8 @@ namespace Meiyounaise.Modules
             await GenerateImage(albums.Content.Count >= 5 ? "--width 870" : $"--width {albums.Content.Count * 174}",
                 $"--height {CalcHeight(albums.Content.Count)}", thisChart);
 
-            var eb = new DiscordEmbedBuilder().WithTimestamp(DateTime.Now).WithColor(DiscordColor.Red)
-                .WithTitle($"Requested by {thisChart.User}").WithFooter("Images by fanart.tv");
-            await ctx.RespondWithFileAsync($"{Utilities.DataPath}{thisChart.Id}.png", embed: eb.Build());
+            
+            await ctx.RespondWithFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",$"Requested by: {thisChart.User}");
             DeleteCharts(thisChart.Id);
         }
 
@@ -397,8 +390,9 @@ namespace Meiyounaise.Modules
             var thisChart = new Chart
             {
                 Id = id.ToString(),
-                User = ctx.User.Mention
+                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
             };
+            
             //Trigger typing to let the user know we're generating his chart
             await ctx.TriggerTypingAsync();
             //Last.fm timespans are weird so we have to convert it
@@ -449,7 +443,7 @@ namespace Meiyounaise.Modules
 
             try
             {
-                var html = await GenerateHtml(artists, HtmlTemplate, option);
+                var html = GenerateHtml(artists, HtmlTemplate, option);
                 File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",
                     html);
             }
@@ -480,7 +474,7 @@ namespace Meiyounaise.Modules
             var thisChart = new Chart
             {
                 Id = id.ToString(),
-                User = ctx.User.Mention
+                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
             };
             //Trigger typing to let the user know we're generating his chart
             await ctx.TriggerTypingAsync();
@@ -532,7 +526,8 @@ namespace Meiyounaise.Modules
 
             try
             {
-                File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html", GenerateHtml(songs.Toptracks.Track, HtmlTemplate, option));
+                File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",
+                    GenerateHtml(songs.Toptracks.Track, HtmlTemplate, option));
             }
             catch (Exception e)
             {
@@ -584,19 +579,31 @@ namespace Meiyounaise.Modules
             return JsonConvert.DeserializeObject<SongResponse>(json);
         }
 
-        private static async Task<string> GetArtistImage(string mbid)
-        { 
-            var rParams =
-                $"/v3/music/{mbid}&?api_key={Utilities.GetKey("fanart")}&format=json";
-            var httpClient = new HttpClient {BaseAddress = new Uri("https://webservice.fanart.tv")};
-            var response = await httpClient.GetAsync(rParams);
-            var json = await response.Content.ReadAsStringAsync();
+        private static string ScrapeImage(LastArtist artist)
+        {
+            var req = (HttpWebRequest) WebRequest.Create(artist.Url);
+            var response = (HttpWebResponse)req.GetResponse();
+            string result;
+            if (response.StatusCode != HttpStatusCode.OK) return "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
+            var receiveStream = response.GetResponseStream();
 
-            var x = JsonConvert.DeserializeObject<ArtistResponse>(json);
-            return x.Artistthumb.First().Url.ToString();
+            var readStream = response.CharacterSet == null ? new StreamReader(receiveStream ?? throw new Exception()) : new StreamReader(receiveStream ?? throw new Exception(), Encoding.GetEncoding(response.CharacterSet));
+            var data = readStream.ReadToEnd();
+            response.Close();
+            readStream.Close();
+            try
+            {
+                result = data.Substring(data.IndexOf("header-avatar", StringComparison.Ordinal), 462);
+                result = result.Substring(result.IndexOf("src=\"", StringComparison.Ordinal) + 5);
+                result = result.Remove(result.IndexOf("\"", StringComparison.Ordinal));
+            }
+            catch (Exception)
+            {
+                result = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
+            }
+            return result;
         }
-        
-        
+
         private static string CalcHeight(int amount)
         {
             return Convert.ToString(((amount - 1) / 5 + 1) * 174);
