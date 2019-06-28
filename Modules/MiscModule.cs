@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -7,7 +8,7 @@ using CoolAsciiFaces;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Meiyounaise.DB;
+using Markov;
 
 namespace Meiyounaise.Modules
 {
@@ -77,6 +78,47 @@ namespace Meiyounaise.Modules
             stopwatch.Stop();
             embed.AddField("\"Local\" latency", $"{stopwatch.Elapsed.Milliseconds}ms", true);
             await temp.ModifyAsync(embed:embed.Build());
+        }
+
+        [Command("markov"), Aliases("sentence")]
+        public async Task Markov(CommandContext ctx, int amount = 50)
+        {
+            var messages= await ctx.Channel.GetMessagesAsync(amount);
+            var lines = messages.Select(msg => msg.Content).ToList();
+            lines = lines.Where(s => !string.IsNullOrEmpty(s)).ToList();
+            var chain = new MarkovChain<string>(1);
+            foreach (var line in lines)
+            {
+                chain.Add(line.Split());
+            }
+            
+            var rand = new Random();
+            await ctx.RespondAsync(string.Join(" ", chain.Chain(rand.Next())));
+        }
+
+        [Command("mock"), Aliases("spott")]
+        public async Task Mock(CommandContext ctx, string content = "")
+        {
+            if (content == "")
+            {
+                var message = await ctx.Channel.GetMessagesAsync(2);
+                content = message.Last().Content;
+            }
+
+            var result = "";
+            
+            for (var i = 0; i < content.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    result += char.ToLower(content[i]);
+                }
+                else
+                {
+                    result += char.ToUpper(content[i]);
+                }
+            }
+            await ctx.RespondAsync(result);
         }
     }
 }

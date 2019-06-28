@@ -13,6 +13,7 @@
       <PackageReference Include="Google.Apis.Auth" Version="1.38.2" />
       <PackageReference Include="Google.Cloud.Translation.V2" Version="1.1.0" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.1.0.339" />
+      <PackageReference Include="Markov" Version="2.0.0" />
       <PackageReference Include="Microsoft.CodeAnalysis" Version="3.0.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.0.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.0.0" />
