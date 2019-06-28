@@ -293,6 +293,9 @@ namespace Meiyounaise.DB
                 .WithAuthor("Command Execution failed!", iconUrl: "https://www.shareicon.net/data/128x128/2016/08/18/810028_close_512x512.png")
                 .WithDescription(e.Exception.Message);
 
+            if (e.Exception.Message.Contains("command was not found"))
+                return;
+            
             if (e.Exception.Message.Contains("pre-execution checks failed"))
             {
                 var checks = new List<string>();

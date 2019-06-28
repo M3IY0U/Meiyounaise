@@ -9,13 +9,15 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Markov;
+using Meiyounaise.DB;
 
 namespace Meiyounaise.Modules
 {
     public class MiscModule : BaseCommandModule
     {
         [Command("sleep")]
-        [Description("Ask when you should go to bed at a specified time or when you should wake up if you don't specify one.")]
+        [Description(
+            "Ask when you should go to bed at a specified time or when you should wake up if you don't specify one.")]
         public async Task Sleep(CommandContext ctx, string time = "")
         {
             var dtime = DateTime.Now;
@@ -27,6 +29,7 @@ namespace Meiyounaise.Modules
                     return;
                 }
             }
+
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor("Sleep Calculator", null, "https://png.pngtree.com/svg/20170223/sleep_412926.png")
                 .WithColor(new DiscordColor(14, 46, 96));
@@ -40,7 +43,7 @@ namespace Meiyounaise.Modules
                 : $"If you want to wake up at {dtime.ToShortTimeString()} you should try to go to bed at one of the following times:");
             await ctx.RespondAsync("", false, eb.Build());
         }
-        
+
         [Command("twitchlotto"), Aliases("tr", "tl")]
         [Description("Returns a link from the infamous Twitch Lotto.")]
         public async Task TwitchLotto(CommandContext ctx)
@@ -50,12 +53,13 @@ namespace Meiyounaise.Modules
                 await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("🔞"));
                 return;
             }
+
             var lines = File.ReadAllLines(Utilities.DataPath + "urls.txt");
             var r = new Random();
             var randomLineNumber = r.Next(0, lines.Length - 1);
             await ctx.RespondAsync(lines[randomLineNumber]);
         }
-        
+
         [Command("someone"), Description("Returns a random online user, kinda like Discord's april fools prank.")]
         public async Task Someone(CommandContext ctx, [RemainingText] string input = "")
         {
@@ -64,7 +68,7 @@ namespace Meiyounaise.Modules
             var result = users.Where(x => !x.IsBot && x.Presence != null).ToList();
             await ctx.RespondAsync($"{Cool.Face} {result[rand.Next(result.Count)].Username} {input}");
         }
-        
+
         [Command("ping"), Description("Returns the Bot's Latencies.")]
         public async Task Ping(CommandContext ctx)
         {
@@ -77,23 +81,28 @@ namespace Meiyounaise.Modules
             await temp.ModifyAsync("Pong!");
             stopwatch.Stop();
             embed.AddField("\"Local\" latency", $"{stopwatch.Elapsed.Milliseconds}ms", true);
-            await temp.ModifyAsync(embed:embed.Build());
+            await temp.ModifyAsync(embed: embed.Build());
         }
 
-        [Command("markov"), Aliases("sentence")]
+        [Command("markov"), Aliases("sentence"), Description(("Generates a \"sentence\" from the last 50 messages"))]
         public async Task Markov(CommandContext ctx, int amount = 50)
         {
-            var messages= await ctx.Channel.GetMessagesAsync(amount);
-            var lines = messages.Select(msg => msg.Content).ToList();
-            lines = lines.Where(s => !string.IsNullOrEmpty(s)).ToList();
-            var chain = new MarkovChain<string>(1);
+            if (amount >= 1000)
+                amount = 1000;
+            
+            var messages = await ctx.Channel.GetMessagesAsync(amount);
+            //messages = messages.Where(m => !m.Author.IsBot).ToList(); //Filter Bot messages
+            var lines = messages.Select(msg => msg.Content).ToList(); //Select content
+            lines = lines.Where(s => !string.IsNullOrEmpty(s)).ToList(); //Remove empty messages
+            lines = lines.Where(s => !s.Contains($"{Guilds.GetGuild(ctx.Guild).Prefix}markov")).ToList();
+            var chain = new MarkovChain<string>(0);
             foreach (var line in lines)
             {
                 chain.Add(line.Split());
             }
-            
+
             var rand = new Random();
-            await ctx.RespondAsync(string.Join(" ", chain.Chain(rand.Next())));
+            await ctx.RespondAsync(string.Join(" ", chain.Chain()));
         }
 
         [Command("mock"), Aliases("spott")]
@@ -106,7 +115,7 @@ namespace Meiyounaise.Modules
             }
 
             var result = "";
-            
+
             for (var i = 0; i < content.Length; i++)
             {
                 if (i % 2 == 0)
@@ -118,6 +127,7 @@ namespace Meiyounaise.Modules
                     result += char.ToUpper(content[i]);
                 }
             }
+
             await ctx.RespondAsync(result);
         }
     }
