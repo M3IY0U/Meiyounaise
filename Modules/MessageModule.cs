@@ -38,21 +38,21 @@ namespace Meiyounaise.Modules
 
             var g = await ctx.RespondAsync($"Found Guilds\n{string.Join("\n", guilds)}\nChoose one via the number!");
             var gResponse = await interactivity.WaitForMessageAsync(x => x.Author == ctx.User);
-            if (gResponse == null)
+            if (gResponse.TimedOut)
             {
                 await ctx.RespondAsync("I didn't get your choice!");
                 return;
             }
 
             await TryDeleteMessage(g);
-            await TryDeleteMessage(gResponse.Message);
+            await TryDeleteMessage(gResponse.Result);
 
-            if (gResponse.Message.Content.ToLower() == "abort")
+            if (gResponse.Result.Content.ToLower() == "abort")
             {
                 return;
             }
 
-            var target = guilds[Convert.ToInt32(gResponse.Message.Content)];
+            var target = guilds[Convert.ToInt32(gResponse.Result.Content)];
             var channels = new Dictionary<int, DiscordChannel>();
             var channelNames = new List<string>();
             var j = 1;
@@ -67,17 +67,17 @@ namespace Meiyounaise.Modules
             var c = await ctx.RespondAsync(
                 $"Listing text channels in guild {target.Name}\n{string.Join("\n", channelNames)}\nChoose one via the number!");
             var cResponse = await interactivity.WaitForMessageAsync(x => x.Author == ctx.User);
-            if (cResponse.Message.Content.ToLower() == "abort")
+            if (cResponse.Result.Content.ToLower() == "abort")
             {
                 await TryDeleteMessage(c);
-                await TryDeleteMessage(cResponse.Message);
+                await TryDeleteMessage(cResponse.Result);
                 return;
             }
 
-            var targetChannel = channels[Convert.ToInt32(cResponse.Message.Content)];
+            var targetChannel = channels[Convert.ToInt32(cResponse.Result.Content)];
             await targetChannel.SendMessageAsync(text);
             await TryDeleteMessage(c);
-            await TryDeleteMessage(cResponse.Message);
+            await TryDeleteMessage(cResponse.Result);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("✅"));
         }
 

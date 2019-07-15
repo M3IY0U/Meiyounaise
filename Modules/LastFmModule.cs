@@ -45,9 +45,11 @@ namespace Meiyounaise.Modules
             {
                 Utilities.Con.Open();
                 using (var cmd =
-                    new SqliteCommand($"UPDATE Users SET lastfm = '{username}' WHERE Users.id = '{ctx.User.Id}'",
+                    new SqliteCommand("UPDATE Users SET lastfm = @username WHERE Users.id = @id",
                         Utilities.Con))
                 {
+                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@id", ctx.User.Id);
                     cmd.ExecuteReader();
                 }
 
@@ -59,9 +61,11 @@ namespace Meiyounaise.Modules
                 Utilities.Con.Open();
                 Users.UserList.Add(new Users.User(ctx.User.Id));
                 using (var cmd =
-                    new SqliteCommand($"INSERT INTO Users (id, lastfm) VALUES ('{ctx.User.Id}', '{username}')",
+                    new SqliteCommand("INSERT INTO Users (id, lastfm) VALUES (@id, @username)",
                         Utilities.Con))
                 {
+                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@id", ctx.User.Id);
                     cmd.ExecuteReader();
                 }
 

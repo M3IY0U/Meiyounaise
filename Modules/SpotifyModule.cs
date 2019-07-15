@@ -15,7 +15,7 @@ namespace Meiyounaise.Modules
     [Group("spotify"), Aliases("sp")]
     public class SpotifyModule : BaseCommandModule
     {
-        private SpotifyWebAPI Spotify;
+        private SpotifyWebAPI _spotify;
 
         private SpotifyWebAPI authSpotify()
         {
@@ -38,9 +38,9 @@ namespace Meiyounaise.Modules
         [GroupCommand]
         public async Task SpotifyCommand(CommandContext ctx, [RemainingText] string input)
         {
-            Spotify = authSpotify();
+            _spotify = authSpotify();
             var interactivity = ctx.Client.GetInteractivity();
-            var result = await Spotify.SearchItemsAsync(input, SearchType.All);
+            var result = await _spotify.SearchItemsAsync(input, SearchType.All);
             if (!result.Albums.Items.Any() && !result.Artists.Items.Any() && !result.Tracks.Items.Any())
             {
                 await ctx.RespondAsync($"`{input}` was not found on Spotify!");
@@ -65,9 +65,9 @@ namespace Meiyounaise.Modules
                 await Task.Delay(100);
             }
 
-            var test = await interactivity.WaitForReactionAsync(x => reactions.Any(x.Name.Contains), ctx.User);
+            var test = await interactivity.WaitForReactionAsync(x => reactions.Any(x.Emoji.Name.Contains), ctx.User);
             await msg.DeleteAsync();
-            switch (test.Emoji.Name)
+            switch (test.Result.Emoji.Name)
             {
                 case "💿":
                 {
@@ -75,11 +75,9 @@ namespace Meiyounaise.Modules
                     var albums = result.Albums.Items;
                     foreach (var album in albums)
                     {
-                        pages.Add(new Page {Content = album.ExternalUrls.First().Value});
+                        pages.Add(new Page(album.ExternalUrls.First().Value));
                     }
-
-                    await interactivity.SendPaginatedMessage(ctx.Channel, ctx.User, pages,
-                        timeoutbehaviouroverride: TimeoutBehaviour.DeleteReactions);
+                    await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages);
                     break;
                 }
 
@@ -89,11 +87,10 @@ namespace Meiyounaise.Modules
                     var artists = result.Artists.Items;
                     foreach (var artist in artists)
                     {
-                        pages.Add(new Page {Content = artist.ExternalUrls.First().Value});
+                        pages.Add(new Page(artist.ExternalUrls.First().Value));
                     }
 
-                    await interactivity.SendPaginatedMessage(ctx.Channel, ctx.User, pages,
-                        timeoutbehaviouroverride: TimeoutBehaviour.DeleteReactions);
+                    await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages);
                     break;
                 }
 
@@ -103,11 +100,10 @@ namespace Meiyounaise.Modules
                     var tracks = result.Tracks.Items;
                     foreach (var track in tracks)
                     {
-                        pages.Add(new Page {Content = track.ExternUrls.First().Value});
+                        pages.Add(new Page (track.ExternUrls.First().Value));
                     }
 
-                    await interactivity.SendPaginatedMessage(ctx.Channel, ctx.User, pages,
-                        timeoutbehaviouroverride: TimeoutBehaviour.DeleteReactions);
+                    await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages);
                     break;
                 }
 
@@ -120,8 +116,8 @@ namespace Meiyounaise.Modules
         [Command("album")]
         public async Task SearchAlbum(CommandContext ctx, [RemainingText] string input)
         {
-            Spotify = authSpotify();
-            var result = await Spotify.SearchItemsAsync(input, SearchType.Album, 1);
+            _spotify = authSpotify();
+            var result = await _spotify.SearchItemsAsync(input, SearchType.Album, 1);
             var response = result.Albums.Items.Count == 0
                 ? $"No Album found with name `{input}`!"
                 : result.Albums.Items.First().ExternalUrls.First().Value;
@@ -131,8 +127,8 @@ namespace Meiyounaise.Modules
         [Command("artist")]
         public async Task SearchArtist(CommandContext ctx, [RemainingText] string input)
         {
-            Spotify = authSpotify();
-            var result = await Spotify.SearchItemsAsync(input, SearchType.Artist, 1);
+            _spotify = authSpotify();
+            var result = await _spotify.SearchItemsAsync(input, SearchType.Artist, 1);
             var response = result.Artists.Items.Count == 0
                 ? $"No Artist found with name `{input}`!"
                 : result.Artists.Items.First().ExternalUrls.First().Value;

@@ -20,8 +20,9 @@ namespace Meiyounaise.Modules
             await ctx.Client.UpdateStatusAsync(new DiscordActivity(status,ActivityType.ListeningTo));
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
             Utilities.Con.Open();
-            using (var cmd = new SqliteCommand($"INSERT INTO Status VALUES ('{status}');",Utilities.Con))
+            using (var cmd = new SqliteCommand("INSERT INTO Status VALUES (@status);",Utilities.Con))
             {
+                cmd.Parameters.AddWithValue("@status", status);
                 cmd.ExecuteReader();
             }
             Utilities.Con.Close();
@@ -37,8 +38,10 @@ namespace Meiyounaise.Modules
                 return;
             }
             Utilities.Con.Open();
-            using (var cmd = new SqliteCommand($"UPDATE Guilds SET prefix = '{newPrefix}' WHERE Guilds.id = {ctx.Guild.Id}", Utilities.Con))
+            using (var cmd = new SqliteCommand("UPDATE Guilds SET prefix = @prefix WHERE Guilds.id = @id", Utilities.Con))
             {
+                cmd.Parameters.AddWithValue("@prefix", newPrefix);
+                cmd.Parameters.AddWithValue("@id", ctx.Guild.Id);
                 cmd.ExecuteReader();
             }
             Utilities.Con.Close();

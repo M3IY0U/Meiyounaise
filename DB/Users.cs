@@ -35,8 +35,9 @@ namespace Meiyounaise.DB
         public static void UpdateUser(DiscordUser user)
         {
             Utilities.Con.Open();
-            using (var cmd = new SqliteCommand($"SELECT * FROM Users WHERE Users.id = {user.Id}", Utilities.Con))
+            using (var cmd = new SqliteCommand("SELECT * FROM Users WHERE Users.id = @id", Utilities.Con))
             {
+                cmd.Parameters.AddWithValue("@id", user.Id);
                 using (var rdr = cmd.ExecuteReader())
                 {
                     if (rdr.Read())

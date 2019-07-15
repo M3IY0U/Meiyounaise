@@ -84,25 +84,107 @@ namespace Meiyounaise.Modules
             await temp.ModifyAsync(embed: embed.Build());
         }
 
-        [Command("markov"), Aliases("sentence"), Description(("Generates a \"sentence\" from the last 50 messages"))]
-        public async Task Markov(CommandContext ctx, int amount = 50)
+        [Command("markov"), Aliases("sentence"), Description("Generates a \"sentence\" from the last 50 messages.")]
+        public async Task Markov(CommandContext ctx, [Description("How many messages the bot should look at.")]
+            int amount = 50, int order = 0)
         {
-            if (amount >= 1000)
-                amount = 1000;
-            
+            if (amount >= 10000)
+                amount = 10000;
             var messages = await ctx.Channel.GetMessagesAsync(amount);
-            //messages = messages.Where(m => !m.Author.IsBot).ToList(); //Filter Bot messages
             var lines = messages.Select(msg => msg.Content).ToList(); //Select content
-            lines = lines.Where(s => !string.IsNullOrEmpty(s)).ToList(); //Remove empty messages
+            lines = lines.Where(s => !string.IsNullOrWhiteSpace(s)).ToList(); //Remove empty messages
             lines = lines.Where(s => !s.Contains($"{Guilds.GetGuild(ctx.Guild).Prefix}markov")).ToList();
-            var chain = new MarkovChain<string>(0);
+            if (lines.Count == 0)
+            {
+                await Markov(ctx, amount + 10);
+                return;
+            }
+
+            await ctx.RespondAsync(MarkovResponse(order, lines));
+        }
+
+        [Command("markov"),
+         Description("Generates a \"sentence\" from the last 50 messages by a specific channel and user.")]
+        public async Task MarkovUserChannel(CommandContext ctx, [Description("Which channel the bot should look at.")]
+            DiscordChannel channel, [Description("Which user's messages the bot should look at.")]
+            DiscordUser user,
+            [Description("How many messages the bot should look at.")]
+            int amount = 500, int order = 0)
+        {
+            if (amount >= 10000)
+                amount = 10000;
+            var messages = await channel.GetMessagesAsync(amount);
+            messages = messages.Where(msg => msg.Author == user).ToList();
+            var lines = messages.Select(msg => msg.Content).ToList(); //Select content
+            lines = lines.Where(s => !string.IsNullOrWhiteSpace(s)).ToList(); //Remove empty messages
+            lines = lines.Where(s => !s.Contains($"{Guilds.GetGuild(ctx.Guild).Prefix}markov")).ToList();
+            if (lines.Count == 0)
+            {
+                await MarkovUser(ctx, user, amount + 10);
+                return;
+            }
+
+            await ctx.RespondAsync(MarkovResponse(order, lines));
+        }
+
+        [Command("markov"), Description("Generates a \"sentence\" from the last 50 messages by a specific user.")]
+        public async Task MarkovUser(CommandContext ctx, [Description("Which user's messages the bot should look at.")]
+            DiscordUser user, [Description("How many messages the bot should look at.")]
+            int amount = 500, int order = 0)
+        {
+            if (amount >= 10000)
+                amount = 10000;
+            var messages = await ctx.Channel.GetMessagesAsync(amount);
+            messages = messages.Where(msg => msg.Author == user).ToList();
+            var lines = messages.Select(msg => msg.Content).ToList(); //Select content
+            lines = lines.Where(s => !string.IsNullOrWhiteSpace(s)).ToList(); //Remove empty messages
+            lines = lines.Where(s => !s.Contains($"{Guilds.GetGuild(ctx.Guild).Prefix}markov")).ToList();
+            if (lines.Count == 0)
+            {
+                await MarkovUser(ctx, user, amount + 10);
+                return;
+            }
+
+            await ctx.RespondAsync(MarkovResponse(order, lines));
+        }
+
+        [Command("markov"), Description("Generates a \"sentence\" from the last 50 messages in a specific channel.")]
+        public async Task MarkovChannel(CommandContext ctx, [Description("Which channel the bot should look at.")]
+            DiscordChannel channel, [Description("How many messages the bot should look at.")]
+            int amount = 50, int order = 0)
+        {
+            if (amount >= 10000)
+                amount = 10000;
+            var messages = await channel.GetMessagesAsync(amount);
+            var lines = messages.Select(msg => msg.Content).ToList(); //Select content
+            lines = lines.Where(s => !string.IsNullOrWhiteSpace(s)).ToList(); //Remove empty messages
+            lines = lines.Where(s => !s.Contains($"{Guilds.GetGuild(ctx.Guild).Prefix}markov")).ToList();
+            if (lines.Count == 0)
+            {
+                await MarkovChannel(ctx, channel, amount + 10);
+                return;
+            }
+
+            await ctx.RespondAsync(MarkovResponse(order, lines));
+        }
+
+        private static string MarkovResponse(int order, IEnumerable<string> lines)
+        {
+            var chain = new MarkovChain<string>(order);
             foreach (var line in lines)
             {
                 chain.Add(line.Split());
             }
 
-            var rand = new Random();
-            await ctx.RespondAsync(string.Join(" ", chain.Chain()));
+            var response = string.Join(" ", chain.Chain());
+            if (response != "") return response;
+            var count = 0;
+            while (response == "")
+            {
+                response = string.Join(" ", chain.Chain());
+                if (count++ > 10) return "Chaining failed!";
+            }
+            return response;
         }
 
         [Command("mock"), Aliases("spott")]

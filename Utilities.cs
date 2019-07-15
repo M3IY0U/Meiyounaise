@@ -58,11 +58,10 @@ namespace Meiyounaise
                     throw new Exception("Unknown service provided!");
             }
 
-            if (result == "#")
+            if (result == "#" || string.IsNullOrWhiteSpace(result))
             {
                 throw new Exception("No username set for the requested service!");
             }
-
             return result;
         }
 

@@ -50,6 +50,7 @@ namespace Meiyounaise
             Client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
             Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
             Client.MessageCreated += DB.EventHandlers.MessageCreated;
+            Client.MessageCreated += DB.Bridge.Message;
         }
 
         private static Task<int> CustomPrefixPredicate(DiscordMessage msg)

@@ -112,37 +112,41 @@ namespace Meiyounaise.Modules
 
             var g = await ctx.RespondAsync($"Found Guilds\n{string.Join("\n", guilds)}\nChoose one via the number!");
             var gResponse = await interactivity.WaitForMessageAsync(x => x.Author == ctx.User);
-            if (gResponse.Message.Content == "abort")
+            if (gResponse.Result.Content == "abort")
             {
+            
                 await g.DeleteAsync();
-                await gResponse.Message.DeleteAsync();
+                await gResponse.Result.DeleteAsync();
                 await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":x:"));
                 return;
             }
 
-            var guildToLeave = guilds[Convert.ToInt32(gResponse.Message.Content)];
+            var guildToLeave = guilds[Convert.ToInt32(gResponse.Result.Content)];
             var rmsg = await ctx.RespondAsync($"This will make the bot leave guild {guildToLeave.Name}. Are you sure?");
             await rmsg.CreateReactionAsync(emojis[0]);
             await rmsg.CreateReactionAsync(emojis[1]);
-            var t = await interactivity.WaitForMessageReactionAsync(rmsg, ctx.User);
-            if (t.Emoji.GetDiscordName() == ":x:")
+            
+            //var t = await interactivity.WaitForMessageReactionAsync(rmsg, ctx.User);
+            var t = await interactivity.WaitForReactionAsync(rmsg, ctx.User);
+            if (t.Result.Emoji.GetDiscordName() == ":x:")
             {
                 await g.DeleteAsync();
-                await gResponse.Message.DeleteAsync();
+                await gResponse.Result.DeleteAsync();
                 await rmsg.DeleteAsync();
                 await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":x:"));
             }
-            else if (t.Emoji.GetDiscordName() == ":white_check_mark:")
+            else if (t.Result.Emoji.GetDiscordName() == ":white_check_mark:")
             {
                 await g.DeleteAsync();
-                await gResponse.Message.DeleteAsync();
+                await gResponse.Result.DeleteAsync();
                 await rmsg.DeleteAsync();
                 await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
 
                 Utilities.Con.Open();
-                using (var cmd = new SqliteCommand($"DELETE FROM Guilds WHERE Guilds.id='{guildToLeave.Id}'",
+                using (var cmd = new SqliteCommand("DELETE FROM Guilds WHERE Guilds.id=@id",
                     Utilities.Con))
                 {
+                    cmd.Parameters.AddWithValue("@id", guildToLeave.Id);
                     cmd.ExecuteReader();
                 }
 

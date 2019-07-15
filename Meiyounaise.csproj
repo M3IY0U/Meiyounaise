@@ -7,9 +7,9 @@
 
     <ItemGroup>
       <PackageReference Include="CoolAsciiFaces.dll" Version="1.0.0" />
-      <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00586" />
-      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00586" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00586" />
+      <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00616" />
+      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00616" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00616" />
       <PackageReference Include="Google.Apis.Auth" Version="1.38.2" />
       <PackageReference Include="Google.Cloud.Translation.V2" Version="1.1.0" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.1.0.339" />

@@ -19,7 +19,7 @@ namespace Meiyounaise.DB
             //Once the Client is ready, get all guilds in the database and put them into dbGuilds
             var dbGuilds = new List<ulong>();
             Utilities.Con.Open();
-            using (var cmd = new SqliteCommand($"SELECT id FROM Guilds", Utilities.Con))
+            using (var cmd = new SqliteCommand("SELECT id FROM Guilds", Utilities.Con))
             {
                 using (var rdr = cmd.ExecuteReader())
                 {
@@ -36,9 +36,10 @@ namespace Meiyounaise.DB
                 if (dbGuilds.Contains(guild.Id)) continue;
                 using (var cmd =
                     new SqliteCommand(
-                        $"INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg,jlMsgChannel,reactionNeeded) VALUES ('{guild.Id}','&','0','empty','empty', '0','0')",
+                        "INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg,jlMsgChannel,reactionNeeded, bridgeChannel) VALUES (@id,'&','0','empty','empty', '0','0', '0')",
                         Utilities.Con))
                 {
+                    cmd.Parameters.AddWithValue("@id", guild.Id);
                     cmd.ExecuteReader();
                 }
             }
@@ -56,9 +57,10 @@ namespace Meiyounaise.DB
             Utilities.Con.Open();
             using (var cmd =
                 new SqliteCommand(
-                    $"INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg, jlMsgChannel, reactionNeeded) VALUES ('{args.Guild.Id}','&','0','empty', 'empty', '0', '0')",
+                    "INSERT INTO Guilds (id,prefix,boardChannel,joinMsg,leaveMsg, jlMsgChannel, reactionNeeded, bridgeChannel) VALUES (@id,'&','0','empty', 'empty', '0', '0', '0')",
                     Utilities.Con))
             {
+                cmd.Parameters.AddWithValue("@id", args.Guild.Id);
                 cmd.ExecuteReader();
             }
 
@@ -74,7 +76,7 @@ namespace Meiyounaise.DB
             Utilities.Con.Open();
             using (var cmd =
                 new SqliteCommand(
-                    $"SELECT text FROM Status ORDER BY RANDOM() LIMIT 1", Utilities.Con))
+                    "SELECT text FROM Status ORDER BY RANDOM() LIMIT 1", Utilities.Con))
             {
                 using (var rdr = cmd.ExecuteReader())
                 {
@@ -137,9 +139,11 @@ namespace Meiyounaise.DB
                 Messages.BoardMessages.Add(new Messages.Message {SourceId = e.Message.Id, BoardId = 0, Sent = false});
                 Utilities.Con.Open();
                 using (var cmd =
-                    new SqliteCommand($"INSERT INTO Messages (id,sent,bId) VALUES ('{e.Message.Id}','{false}','0')",
+                    new SqliteCommand("INSERT INTO Messages (id,sent,bId) VALUES (@id,@sent,'0')",
                         Utilities.Con))
                 {
+                    cmd.Parameters.AddWithValue("@sent", false);
+                    cmd.Parameters.AddWithValue("@id", e.Message.Id);
                     cmd.ExecuteReader();
                 }
 
@@ -215,9 +219,11 @@ namespace Meiyounaise.DB
                     Utilities.Con.Open();
                     using (var cmd =
                         new SqliteCommand(
-                            $"UPDATE Messages SET sent= 'true', bId = '{bmsg.Id}' WHERE Messages.id = '{e.Message.Id}'",
+                            "UPDATE Messages SET sent= 'true', bId = @bid WHERE Messages.id = @id",
                             Utilities.Con))
                     {
+                        cmd.Parameters.AddWithValue("@bid", bmsg.Id);
+                        cmd.Parameters.AddWithValue("@id", e.Message.Id);
                         cmd.ExecuteReader();
                     }
 
@@ -288,13 +294,18 @@ namespace Meiyounaise.DB
 
         public static async Task CommandErrored(CommandErrorEventArgs e)
         {
+            if (e.Exception.Message.Contains("command was not found"))
+            {
+                await e.Context.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("❓"));
+                return;
+            }
+
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordColor.Red)
                 .WithAuthor("Command Execution failed!", iconUrl: "https://www.shareicon.net/data/128x128/2016/08/18/810028_close_512x512.png")
                 .WithDescription(e.Exception.Message);
 
-            if (e.Exception.Message.Contains("command was not found"))
-                return;
+            
             
             if (e.Exception.Message.Contains("pre-execution checks failed"))
             {
