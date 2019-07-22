@@ -212,5 +212,13 @@ namespace Meiyounaise.Modules
 
             await ctx.RespondAsync(result);
         }
+
+        [Command("tts")]
+        public async Task Tts(CommandContext ctx, [RemainingText]string message)
+        {
+            await Utilities.DownloadAsync(new Uri($"https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={message}"), "speech.mp3");
+            await ctx.RespondWithFileAsync("speech.mp3");
+            File.Delete("speech.mp3");
+        }
     }
 }
