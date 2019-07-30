@@ -83,7 +83,7 @@ namespace Meiyounaise.Modules
 
             await ctx.RespondAsync(embed: eb.Build());
         }
-
+        
         private static byte[] GetImageAsByteArray(string imageFilePath)
         {
             // Open a read-only file stream for the specified file.

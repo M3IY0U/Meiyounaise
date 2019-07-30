@@ -28,6 +28,8 @@ namespace Meiyounaise.Modules
         private const string HtmlTemplate =
             "<meta charset=\"UTF-8\"><link href=\"https://fonts.googleapis.com/css?family=Baloo+Thambi\" rel=\"stylesheet\"><style> *{font-size: 15px !important;color: #ffffff !important;line-height: 95%; font-family: 'Baloo Thambi', cursive !important;text-shadow: -1.5px 0 #000, 0 1.5px #000, 1.5px 0 #000, 0 -1.5px #000;} body {margin: 0;}</style>";
 
+        private const string SongChartTemplate = "<!doctype html><html><head> <meta charset=\"utf-8\" /><style>body{background: #262626; font-family: sans-serif;}.center{width: 99%; position: absolute;}.skillBox{padding-bottom: 10px;}.skillBox p{letter-spacing: 0.5px; font-size: large; color: #fff; margin: 0 0 3px; padding: 0; font-weight: bold;}.skillBox p:nth-child(2){position: relative; top: -25px; float: right;}.skill{background: #262626; padding: 4px; box-sizing: border-box; border: 1px solid #bb0000;}.skill_level{background: #bb0000; width: 100%; height: 10px;}</style></head><body> <div class=\"center\">";
+        
         private static readonly LastfmClient Client = new LastfmClient(Utilities.GetKey("lastkey"),
             Utilities.GetKey("lastsecret"), new HttpClient());
 
@@ -211,45 +213,19 @@ namespace Meiyounaise.Modules
             return html;
         }
 
-        private static string GenerateHtml(IEnumerable<Track> tracks, string html, string option)
+        private static string GenerateHtml(IEnumerable<Track> tracks, string html)
         {
-            var counter = 0;
             var playCount = "";
-            foreach (var track in tracks)
+            var enumerable = tracks.ToList();
+            var maxPlayCount = enumerable.First().PlayCount;
+            foreach (var track in enumerable)
             {
-                var imageUrl = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
-                switch (option.ToLower())
-                {
-                    case "all":
-                        if (track.PlayCount != 0)
-                            playCount = track.PlayCount + " Plays";
-                        html +=
-                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\"><p style=\"position:absolute;top:-12px;left:4px;\">{track.Artist.Name} -<br>{track.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-                        break;
-                    case "names":
-                        html +=
-                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\"><p style=\"position:absolute;top:-12px;left:4px;\">{track.Artist.Name} -<br>{track.Name}</p></div>";
-                        break;
-                    case "blank":
-                        html +=
-                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\"></div>";
-                        break;
-                    case "plays":
-                        if (track.PlayCount != 0)
-                            playCount = track.PlayCount + " Plays";
-                        html +=
-                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-                        break;
-                    default:
-                        throw new Exception($"`{option}` is not a valid Option");
-                }
-
-                if (++counter % 5 != 0) continue;
-                html += "<br>";
-                counter = 0;
+                if (track.PlayCount != 0) 
+                    playCount = track.PlayCount + " Plays";
+                html +=
+                    $"<div class=\"skillBox\"> <p>{track.Name} <i>by {track.Artist.Name}</i></p><p>{playCount}</p><div class=\"skill\"> <div class=\"skill_level\" style=\"width: {99 * track.PlayCount / maxPlayCount + 1}%\"></div></div></div>";
             }
-
-            return html;
+            return html + "</div></body></html>";
         }
 
         private static int ConvertTimeSpan(string timespan)
@@ -469,8 +445,7 @@ namespace Meiyounaise.Modules
         [Description("Returns an image of your top songs scrobbled on last.fm.")]
         public async Task GenerateSongChart(CommandContext ctx,
             [Description("Available Timespans: overall, year, half, quarter, month and week")]
-            string timespan = "overall", [Description("Available Options: all, names, plays, blank")]
-            string option = "all",
+            string timespan = "overall",
             [Description("The username whose songchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
@@ -480,9 +455,7 @@ namespace Meiyounaise.Modules
                 Id = id.ToString(),
                 User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
             };
-            //Trigger typing to let the user know we're generating his chart
             await ctx.TriggerTypingAsync();
-            //Last.fm timespans are weird so we have to convert it
 
             var user = Users.GetUser(ctx.User);
             if (user == null && username == "")
@@ -492,10 +465,8 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            //If a name was provided, generate a chart for that user
             var name = username == "" ? user?.Last : username;
 
-            //Get the top 25 albums on last.fm
             SongResponse songs;
             try
             {
@@ -524,14 +495,14 @@ namespace Meiyounaise.Modules
 
             if (songs.Toptracks.Track.Count == 0)
             {
-                await ctx.RespondAsync("You didn't listen to any artists yet!");
+                await ctx.RespondAsync("You didn't listen to any songs yet!");
                 return;
             }
 
             try
             {
                 File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",
-                    GenerateHtml(songs.Toptracks.Track, HtmlTemplate, option));
+                    GenerateHtml(songs.Toptracks.Track, SongChartTemplate));
             }
             catch (Exception e)
             {
@@ -540,8 +511,8 @@ namespace Meiyounaise.Modules
             }
 
             await GenerateImage(
-                songs.Toptracks.Track.Count >= 5 ? "--width 870" : $"--width {songs.Toptracks.Track.Count * 174}",
-                $"--height {CalcHeight(songs.Toptracks.Track.Count)}", thisChart);
+                "",
+                "", thisChart);
 
             await ctx.Channel.SendFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
                 $"Requested by: {thisChart.User}");
@@ -597,11 +568,10 @@ namespace Meiyounaise.Modules
             readStream.Close();
             try
             {
-                result = data.Substring(data.IndexOf("header-avatar", StringComparison.Ordinal), 462);
-                result = result.Substring(result.IndexOf("src=\"", StringComparison.Ordinal) + 5);
+                result = data.Substring(data.IndexOf("<meta property=\"og:image\"           content=\"", StringComparison.Ordinal)+45, 150);
                 result = result.Remove(result.IndexOf("\"", StringComparison.Ordinal));
             }
-            catch (Exception)
+            catch (Exception) 
             {
                 result = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
             }
