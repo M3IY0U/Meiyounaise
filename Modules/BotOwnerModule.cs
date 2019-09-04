@@ -223,8 +223,21 @@ namespace Meiyounaise.Modules
                     return;
                 }
             }
-
             Utilities.Con.Close();
+        }
+
+        [Command("updateuser"), Aliases("uu"), RequireOwner, Hidden]
+        public async Task UpdateUser(CommandContext ctx, DiscordUser user = null)
+        {
+            if (user == null)
+            {
+                await Users.UpdateAllUsers();
+            }
+            else
+            {
+                Users.UpdateUser(user);
+            }
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
         [Command("execute"), Aliases("exec", "run"), RequireOwner, Hidden]

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using Microsoft.Data.Sqlite;
 
@@ -54,6 +55,16 @@ namespace Meiyounaise.DB
                 }
             }
             Utilities.Con.Close();
+        }
+
+        public static async Task UpdateAllUsers()
+        {
+            var copy = UserList;
+            foreach (var user in copy.ToList())
+            {
+                var dUser = await Bot.Client.GetUserAsync(user.Id);
+                UpdateUser(dUser);
+            }
         }
         
         public static User GetUser(DiscordUser user)

@@ -6,6 +6,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Translation.V2;
+using Meiyounaise.DB;
 
 namespace Meiyounaise.Modules
 {
@@ -65,7 +66,15 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await ctx.RespondAsync(GTranslate(text, langcode));
+            try
+            {
+                await ctx.RespondAsync(GTranslate(text, langcode));
+            }
+            catch (Exception)
+            {
+                throw new Exception("Couldn't translate, probably because you used the wrong language code.\n" +
+                                    $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
+            }
         }
 
         private static async Task LastTranslate(CommandContext ctx, string langcode)
@@ -124,7 +133,15 @@ namespace Meiyounaise.Modules
                 return;
             }
             var message = await ctx.Channel.GetMessagesAsync(2);
-            await ctx.RespondAsync(GTranslate(message.Last().Content, langcode));
+            try
+            {
+                await ctx.RespondAsync(GTranslate(message.Last().Content, langcode));
+            }
+            catch (Exception)
+            {
+                throw new Exception("Couldn't translate, probably because you used the wrong language code.\n" +
+                                    $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
+            }
         }
         
         private static string GTranslate(string text, string lang)
