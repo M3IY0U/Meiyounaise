@@ -141,25 +141,25 @@ namespace Meiyounaise.Modules
                         if (album.PlayCount.HasValue)
                             playCount = album.PlayCount.Value + " Plays";
                         html += album.Images.Large != null
-                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{album.Images.Large.AbsoluteUri}\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                            ? $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{album.Images.Large.AbsoluteUri}\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     case "names":
                         html += album.Images.Large != null
-                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{album.Images.Large.AbsoluteUri}\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>";
+                            ? $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{album.Images.Large.AbsoluteUri}\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>";
                         break;
                     case "blank":
                         html += album.Images.Large != null
-                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{album.Images.Large.AbsoluteUri}\"></div>"
-                            : "<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"></div>";
+                            ? $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{album.Images.Large.AbsoluteUri}\"></div>"
+                            : "<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"></div>";
                         break;
                     case "plays":
                         if (album.PlayCount.HasValue)
                             playCount = album.PlayCount.Value + " Plays";
                         html += album.Images.Large != null
-                            ? $"<div style=\"position:relative;display:inline-block\"><img src=\"{album.Images.Large.AbsoluteUri}\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                            ? $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{album.Images.Large.AbsoluteUri}\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     default:
                         throw new Exception($"`{option}` is not a valid Option");
@@ -186,20 +186,20 @@ namespace Meiyounaise.Modules
                         if (artist.PlayCount.HasValue)
                             playCount = artist.PlayCount.Value + " Plays";
                         html +=
-                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\" width=174 height=174><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                            $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{imageUrl}\" width=174 height=174><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     case "names":
                         html +=
-                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p></div>";
+                            $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{imageUrl}\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p></div>";
                         break;
                     case "blank":
-                        html += $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\"></div>";
+                        html += $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{imageUrl}\"></div>";
                         break;
                     case "plays":
                         if (artist.PlayCount.HasValue)
                             playCount = artist.PlayCount.Value + " Plays";
                         html +=
-                            $"<div style=\"position:relative;display:inline-block\"><img src=\"{imageUrl}\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                            $"<div style=\"position:relative;display:inline-block\"><img style=\"object-fit: cover;\" src=\"{imageUrl}\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     default:
                         throw new Exception($"`{option}` is not a valid Option");
