@@ -69,8 +69,6 @@ namespace Meiyounaise
             Console.WriteLine("Timer started!");
         }
 
-        
-
         private static Task<int> CustomPrefixPredicate(DiscordMessage msg)
         {
             var guild = DB.Guilds.GetGuild(msg.Channel.Guild);

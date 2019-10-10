@@ -306,8 +306,7 @@ namespace Meiyounaise.Modules
             {
                 eb.AddField($"Server Rank: #{++i}",
                     $"[{user.Username}](https://osu.ppy.sh/users/{user.Userid})\nGlobal Rank: #{user.GlobalRank} ({Math.Round(user.Pp, 2)}pp)\n" +
-                    $"Local Rank : #{user.RegionalRank} {DiscordEmoji.FromName(Bot.Client, $":flag_{user.Country.ToLower()}:")}",
-                    true);
+                    $"Local Rank : #{user.RegionalRank} {DiscordEmoji.FromName(Bot.Client, $":flag_{user.Country.ToLower()}:")}");
             }
 
             await ctx.RespondAsync(embed: eb.Build());
