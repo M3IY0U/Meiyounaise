@@ -56,29 +56,29 @@ namespace Meiyounaise.Modules
 
             var responseObject = JsonConvert.DeserializeObject<RecognitionResponse>(contentString);
 
-            var tags = responseObject.description.tags.Count == 0
+            var tags = responseObject.Description.Tags.Count == 0
                 ? "None"
-                : string.Join(", ", responseObject.description.tags);
-            var categories = responseObject.categories.Count == 0
+                : string.Join(", ", responseObject.Description.Tags);
+            var categories = responseObject.Categories.Count == 0
                 ? "None"
-                : responseObject.categories.Aggregate("",
-                    (current, category) => current + $"\n{category.name}; Score {Math.Round(category.score, 2)}");
-            var captions = responseObject.description.captions.Count == 0
+                : responseObject.Categories.Aggregate("",
+                    (current, category) => current + $"\n{category.Name}; Score {Math.Round(category.Score, 2)}");
+            var captions = responseObject.Description.Captions.Count == 0
                 ? "None"
-                : responseObject.description.captions.Aggregate("",
-                    (current, desc) => current + $"\n{desc.text}; Confidence {Math.Round(desc.confidence, 2)}");
+                : responseObject.Description.Captions.Aggregate("",
+                    (current, desc) => current + $"\n{desc.Text}; Confidence {Math.Round(desc.Confidence, 2)}");
 
             var eb = new DiscordEmbedBuilder()
-                .WithColor(new DiscordColor(responseObject.color.accentColor))
+                .WithColor(new DiscordColor(responseObject.Color.AccentColor))
                 .WithTitle("Image Analysis")
                 .WithThumbnailUrl(imageUrl)
                 .WithDescription(captions)
                 .AddField("Categories",categories,true)
                 .AddField("Tags", tags, true)
-                .AddField("Colors",$"Foreground Color: {responseObject.color.dominantColorForeground}\nBackground Color: {responseObject.color.dominantColorBackground}\nAccent Color: {responseObject.color.accentColor}",
+                .AddField("Colors",$"Foreground Color: {responseObject.Color.DominantColorForeground}\nBackground Color: {responseObject.Color.DominantColorBackground}\nAccent Color: {responseObject.Color.AccentColor}",
                     true)
                 .AddField("Dimensions",
-                    $"{responseObject.metadata.width} x {responseObject.metadata.height}, Format: {responseObject.metadata.format}",
+                    $"{responseObject.Metadata.Width} x {responseObject.Metadata.Height}, Format: {responseObject.Metadata.Format}",
                     true);
 
             await ctx.RespondAsync(embed: eb.Build());

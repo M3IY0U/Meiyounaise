@@ -4,46 +4,44 @@ namespace Meiyounaise.Modules
 {
     public class Category
     {
-        public string name { get; set; }
-        public double score { get; set; }
+        public string Name { get; set; }
+        public double Score { get; set; }
     }
 
     public class Caption
     {
-        public string text { get; set; }
-        public double confidence { get; set; }
+        public string Text { get; set; }
+        public double Confidence { get; set; }
     }
 
     public class Description
     {
-        public IList<string> tags { get; set; }
-        public IList<Caption> captions { get; set; }
+        public IList<string> Tags { get; set; }
+        public IList<Caption> Captions { get; set; }
     }
 
     public class Metadata
     {
-        public int width { get; set; }
-        public int height { get; set; }
-        public string format { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public string Format { get; set; }
     }
 
     public class Color
     {
-        public string dominantColorForeground { get; set; }
-        public string dominantColorBackground { get; set; }
-        public IList<string> dominantColors { get; set; }
-        public string accentColor { get; set; }
-        public bool isBWImg { get; set; }
+        public string DominantColorForeground { get; set; }
+        public string DominantColorBackground { get; set; }
+        public IList<string> DominantColors { get; set; }
+        public string AccentColor { get; set; }
+        public bool IsBwImg { get; set; }
     }
 
     public class RecognitionResponse
     {
-        public IList<Category> categories { get; set; }
-        public Description description { get; set; }
-        public string requestId { get; set; }
-        public Metadata metadata { get; set; }
-        public Color color { get; set; }
+        public IList<Category> Categories { get; set; }
+        public Description Description { get; set; }
+        public string RequestId { get; set; }
+        public Metadata Metadata { get; set; }
+        public Color Color { get; set; }
     }
-
-
 }

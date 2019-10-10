@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,6 +7,9 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using Meiyounaise.Modules;
+using OsuSharp.Endpoints;
+using Timer = System.Timers.Timer;
 
 namespace Meiyounaise
 {
@@ -15,6 +19,7 @@ namespace Meiyounaise
         private CommandsNextExtension _cnext;
         public static InteractivityExtension Interactivity;
         private CancellationTokenSource _cts;
+        public static Dictionary<string, List<UserBest>> OsuTops = new Dictionary<string, List<UserBest>>();
 
         public Bot()
         {
@@ -51,7 +56,20 @@ namespace Meiyounaise
             Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
             Client.MessageCreated += DB.EventHandlers.MessageCreated;
             Client.MessageCreated += DB.Bridge.Message;
+            OsuModule.UpdateTopPlays();
+            
+            var osuTimer = new Timer
+            {
+                Interval = 120000,
+                AutoReset = true,
+                Enabled = true
+            }; 
+            GC.KeepAlive(osuTimer);
+            osuTimer.Elapsed += OsuModule.OsuTimerElapsed;
+            Console.WriteLine("Timer started!");
         }
+
+        
 
         private static Task<int> CustomPrefixPredicate(DiscordMessage msg)
         {

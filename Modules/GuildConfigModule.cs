@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus;
@@ -213,8 +212,7 @@ namespace Meiyounaise.Modules
             Guilds.UpdateGuild(ctx.Guild);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
-
-
+        
         [Command("leavemsg"), Description("Sets the message that the bot will post if someone leaves the guild.")]
         [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetLeaveMsg(CommandContext ctx,

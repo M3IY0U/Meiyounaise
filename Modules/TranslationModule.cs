@@ -4,17 +4,13 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Translation.V2;
+using GoogleTranslateFreeApi;
 using Meiyounaise.DB;
 
 namespace Meiyounaise.Modules
 {
     public class TranslationModule : BaseCommandModule
     {
-        private static readonly GoogleCredential Credential =
-            GoogleCredential.FromJson(Utilities.GetKey("googleTranslate"));
-
         //TRANSLATE TO DE
         [Command("de")]
         [Description("Translates your message to german.")]
@@ -26,13 +22,15 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await ctx.RespondAsync(GTranslate(text, LanguageCodes.German));
+            var translation = await GTranslate(text, Language.German.ISO639);
+            await ctx.RespondAsync(translation);
         }
 
         private static async Task LastGerman(CommandContext ctx)
         {
             var message = await ctx.Channel.GetMessagesAsync(2);
-            await ctx.RespondAsync(GTranslate(message.Last().Content, LanguageCodes.German));
+            var translation = await GTranslate(message.Last().Content, Language.German.ISO639);
+            await ctx.RespondAsync(translation);
         }
 
         //TRANSLATE TO EN
@@ -46,18 +44,21 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await ctx.RespondAsync(GTranslate(text, LanguageCodes.English));
+            var translation = await GTranslate(text, Language.English.ISO639);
+            await ctx.RespondAsync(translation);
         }
 
         private static async Task LastEnglish(CommandContext ctx)
         {
             var message = await ctx.Channel.GetMessagesAsync(2);
-            await ctx.RespondAsync(GTranslate(message.Last().Content, LanguageCodes.English));
+            var translation = await GTranslate(message.Last().Content, Language.English.ISO639);
+            await ctx.RespondAsync(translation);
         }
 
         //TRANSLATE TO ANY LANGUAGE
         [Command("translate")]
-        [Description("Translates your text into the desired language. If you enter \"codes\" instead of a code the bot will dm you all available codes.")]
+        [Description(
+            "Translates your text into the desired language. If you enter \"codes\" instead of a code the bot will dm you all available codes.")]
         public async Task Translate(CommandContext ctx, string langcode, [RemainingText] string text)
         {
             if (string.IsNullOrEmpty(text))
@@ -68,7 +69,8 @@ namespace Meiyounaise.Modules
 
             try
             {
-                await ctx.RespondAsync(GTranslate(text, langcode));
+                var translation = await GTranslate(text, langcode);
+                await ctx.RespondAsync(translation);
             }
             catch (Exception)
             {
@@ -86,36 +88,37 @@ namespace Meiyounaise.Modules
                 var embed3 = new DiscordEmbedBuilder();
                 var embed4 = new DiscordEmbedBuilder();
                 var embed5 = new DiscordEmbedBuilder();
-                var client = TranslationClient.Create(Credential);
+                //var client = TranslationClient.Create(Credential);
                 int i = 0;
-                foreach (var language in client.ListLanguages(LanguageCodes.English))
+                foreach (var language in GoogleTranslator.LanguagesSupported)
                 {
                     if (i < 25)
                     {
-                        embed.AddField(language.Name, language.Code, true);
+                        embed.AddField(language.FullName, language.ISO639, true);
                         i++;
                     }
                     else if (i < 50)
                     {
-                        embed2.AddField(language.Name, language.Code, true);
+                        embed2.AddField(language.FullName, language.ISO639, true);
                         i++;
                     }
                     else if (i < 75)
                     {
-                        embed3.AddField(language.Name, language.Code, true);
+                        embed3.AddField(language.FullName, language.ISO639, true);
                         i++;
                     }
                     else if (i < 100)
                     {
-                        embed4.AddField(language.Name, language.Code, true);
+                        embed4.AddField(language.FullName, language.ISO639, true);
                         i++;
                     }
                     else if (i < 125)
                     {
-                        embed5.AddField(language.Name, language.Code, true);
+                        embed5.AddField(language.FullName, language.ISO639, true);
                         i++;
                     }
                 }
+
                 try
                 {
                     var dm = await ctx.Member.CreateDmChannelAsync();
@@ -130,12 +133,15 @@ namespace Meiyounaise.Modules
                 {
                     await ctx.RespondAsync(e.Message);
                 }
+
                 return;
             }
+
             var message = await ctx.Channel.GetMessagesAsync(2);
             try
             {
-                await ctx.RespondAsync(GTranslate(message.Last().Content, langcode));
+                var translation = await GTranslate(message.Last().Content, langcode);
+                await ctx.RespondAsync(translation);
             }
             catch (Exception)
             {
@@ -143,11 +149,12 @@ namespace Meiyounaise.Modules
                                     $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
             }
         }
-        
-        private static string GTranslate(string text, string lang)
+
+        private static async Task<string> GTranslate(string text, string lang)
         {
-            var client = TranslationClient.Create(Credential);
-            return client.TranslateText(text, lang).TranslatedText;
+            var client = new GoogleTranslator();
+            var result = await client.TranslateLiteAsync(text, Language.Auto, GoogleTranslator.GetLanguageByISO(lang));
+            return result.MergedTranslation;
         }
     }
 }

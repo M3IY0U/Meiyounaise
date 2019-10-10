@@ -63,7 +63,7 @@ namespace Meiyounaise.Modules
                 Utilities.Con.Open();
                 Users.UserList.Add(new Users.User(ctx.User.Id));
                 using (var cmd =
-                    new SqliteCommand("INSERT INTO Users (id, lastfm) VALUES (@id, @username)",
+                    new SqliteCommand("INSERT INTO Users (id, lastfm, osu) VALUES (@id, @username, '#')",
                         Utilities.Con))
                 {
                     cmd.Parameters.AddWithValue("@username", username);
@@ -283,40 +283,21 @@ namespace Meiyounaise.Modules
             [Description("The username whose albumchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
-            var id = Guid.NewGuid();
-            var thisChart = new Chart
-            {
-                Id = id.ToString(),
-                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
-            };
-            //Trigger typing to let the user know we're generating his chart
+            var thisChart = GenerateChart(ctx);
             await ctx.TriggerTypingAsync();
-
-            //Last.fm timespans are weird so we have to convert it
-            int ts;
-            try
-            {
-                ts = ConvertTimeSpan(timespan);
-            }
-            catch (Exception e)
-            {
-                await ctx.RespondAsync(e.Message);
-                return;
-            }
 
             var user = Users.GetUser(ctx.User);
             if (user == null && username == "")
             {
-                await ctx.RespondAsync(
+                throw new Exception(
                     $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
-                return;
             }
 
             //If a name was provided, generate a chart for that user
             var name = username == "" ? user?.Last : username;
 
             //Get the top 25 albums on last.fm
-            var albums = await Client.User.GetTopAlbums(name, (LastStatsTimeSpan) ts, 1, 25);
+            var albums = await Client.User.GetTopAlbums(name, (LastStatsTimeSpan) ConvertTimeSpan(timespan), 1, 25);
             if (!albums.Success)
             {
                 if (username == "")
@@ -357,6 +338,15 @@ namespace Meiyounaise.Modules
             DeleteCharts(thisChart.Id);
         }
 
+        private static Chart GenerateChart(CommandContext ctx)
+        {
+            return new Chart
+            {
+                Id = Guid.NewGuid().ToString(),
+                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
+            };
+        }
+        
         [Command("artistchart")]
         [Description("Returns an image of your top artists scrobbled on last.fm.")]
         public async Task GenerateArtistChart(CommandContext ctx,
@@ -366,40 +356,22 @@ namespace Meiyounaise.Modules
             [Description("The username whose artistchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
-            var id = Guid.NewGuid();
-            var thisChart = new Chart
-            {
-                Id = id.ToString(),
-                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
-            };
+            var thisChart = GenerateChart(ctx);
             
-            //Trigger typing to let the user know we're generating his chart
             await ctx.TriggerTypingAsync();
-            //Last.fm timespans are weird so we have to convert it
-            int ts;
-            try
-            {
-                ts = ConvertTimeSpan(timespan);
-            }
-            catch (Exception e)
-            {
-                await ctx.RespondAsync(e.Message);
-                return;
-            }
-
+            
             var user = Users.GetUser(ctx.User);
             if (user == null && username == "")
             {
-                await ctx.RespondAsync(
+                throw new Exception(
                     $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
-                return;
             }
 
             //If a name was provided, generate a chart for that user
             var name = username == "" ? user?.Last : username;
 
-            //Get the top 25 albums on last.fm
-            var artists = await Client.User.GetTopArtists(name, (LastStatsTimeSpan) ts, 1, 25);
+            //Get the top 25 artists on last.fm
+            var artists = await Client.User.GetTopArtists(name, (LastStatsTimeSpan) ConvertTimeSpan(timespan), 1, 25);
             if (!artists.Success)
             {
                 if (username == "")
@@ -580,7 +552,7 @@ namespace Meiyounaise.Modules
 
         private static string CalcHeight(int amount)
         {
-            return Convert.ToString(((amount - 1) / 5 + 1) * 174);
+            return Convert.ToString((((amount - 1) / 5) + 1) * 174);
         }
 
         private class Chart

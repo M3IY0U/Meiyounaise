@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DSharpPlus.Entities;
 using Microsoft.Data.Sqlite;
 
 namespace Meiyounaise.DB

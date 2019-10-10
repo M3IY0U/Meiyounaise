@@ -184,6 +184,7 @@ namespace Meiyounaise.Modules
                 response = string.Join(" ", chain.Chain());
                 if (count++ > 10) return "Chaining failed!";
             }
+
             return response;
         }
 
@@ -214,9 +215,10 @@ namespace Meiyounaise.Modules
         }
 
         [Command("tts")]
-        public async Task Tts(CommandContext ctx, [RemainingText]string message)
+        public async Task Tts(CommandContext ctx, [RemainingText] string message)
         {
-            await Utilities.DownloadAsync(new Uri($"https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={message}"), "speech.mp3");
+            await Utilities.DownloadAsync(
+                new Uri($"https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={message}"), "speech.mp3");
             await ctx.RespondWithFileAsync("speech.mp3");
             File.Delete("speech.mp3");
         }

@@ -114,7 +114,6 @@ namespace Meiyounaise.Modules
             var gResponse = await interactivity.WaitForMessageAsync(x => x.Author == ctx.User);
             if (gResponse.Result.Content == "abort")
             {
-            
                 await g.DeleteAsync();
                 await gResponse.Result.DeleteAsync();
                 await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":x:"));

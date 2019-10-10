@@ -2,7 +2,7 @@
 {
     class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
         {
             using (var b = new Bot())
             {

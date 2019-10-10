@@ -13,47 +13,62 @@ namespace Meiyounaise.Modules
     public class SettingsModule : BaseCommandModule
     {
         [Command("status")]
-        [Description("Changes the Bot's \"Listening to\" Status.")]
-        public async Task Status(CommandContext ctx, [RemainingText, Description("The new status.")]
+        [Description("Changes the bot's status.")]
+        public async Task Status(CommandContext ctx,
+            [Description("Available options are:\n\"p\"-> playing\n\"l\"-> listening to\n\"w\"-> watching")]
+            string opt, [RemainingText, Description("The new status.")]
             string status)
         {
-            await ctx.Client.UpdateStatusAsync(new DiscordActivity(status,ActivityType.ListeningTo));
-            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
-            Utilities.Con.Open();
-            using (var cmd = new SqliteCommand("INSERT INTO Status VALUES (@status);",Utilities.Con))
+            switch (opt.ToLower())
             {
-                cmd.Parameters.AddWithValue("@status", status);
-                cmd.ExecuteReader();
+                case "l":
+                    await ctx.Client.UpdateStatusAsync(new DiscordActivity(status, ActivityType.ListeningTo));
+                    break;
+                case "p":
+                    await ctx.Client.UpdateStatusAsync(new DiscordActivity(status, ActivityType.Playing));
+                    break;
+                case "w":
+                    await ctx.Client.UpdateStatusAsync(new DiscordActivity(status, ActivityType.Watching));
+                    break;
+                default:
+                    throw new Exception(
+                        $"Available options are:\n\"p\"-> playing\n\"l\"-> listening to\n\"w\"-> watching\nExample: `{Guilds.GetGuild(ctx.Guild).Prefix}status l boomer music`");
             }
-            Utilities.Con.Close();
+
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("prefix"),RequireUserPermissions(Permissions.ManageGuild)]
+        [Command("prefix"), RequireUserPermissions(Permissions.ManageGuild)]
         [Description("Set the Bot's Prefix on this guild.")]
-        public async Task Prefix(CommandContext ctx, [RemainingText, Description("The new Prefix")] string newPrefix = "")
+        public async Task Prefix(CommandContext ctx, [RemainingText, Description("The new Prefix")]
+            string newPrefix)
         {
-            if (newPrefix=="")
-            {
-                await ctx.RespondAsync($"The prefix on this guild is `{Guilds.GetGuild(ctx.Guild).Prefix}`");
-                return;
-            }
             Utilities.Con.Open();
-            using (var cmd = new SqliteCommand("UPDATE Guilds SET prefix = @prefix WHERE Guilds.id = @id", Utilities.Con))
+            using (var cmd =
+                new SqliteCommand("UPDATE Guilds SET prefix = @prefix WHERE Guilds.id = @id", Utilities.Con))
             {
                 cmd.Parameters.AddWithValue("@prefix", newPrefix);
                 cmd.Parameters.AddWithValue("@id", ctx.Guild.Id);
                 cmd.ExecuteReader();
             }
+
             Utilities.Con.Close();
             Guilds.UpdateGuild(ctx.Guild);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
+        }
+
+        [Command("prefix"), RequireUserPermissions(Permissions.ManageGuild), Priority(5)]
+        [Description("Set the Bot's Prefix on this guild.")]
+        public async Task Prefix(CommandContext ctx)
+        {
+            await ctx.RespondAsync($"The prefix on this guild is `{Guilds.GetGuild(ctx.Guild).Prefix}`");
         }
 
         [Command("nick"), Description("Changes the Bot's Nickname.")]
         public async Task Nick(CommandContext ctx, [RemainingText, Description("The new Nickname.")]
             string newNick)
         {
-            await ctx.Guild.CurrentMember.ModifyAsync(x=>x.Nickname= newNick);
+            await ctx.Guild.CurrentMember.ModifyAsync(x => x.Nickname = newNick);
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 

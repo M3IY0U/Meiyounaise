@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -16,7 +17,88 @@ namespace Meiyounaise.Modules
     [Group("osu")]
     public class OsuModule : BaseCommandModule
     {
-        private OsuApi osuApi = new OsuApi(new OsuSharpConfiguration
+        public static void UpdateTopPlays()
+        {
+            foreach (var user in Users.UserList)
+            {
+                if (user.Osu == "#" || string.IsNullOrWhiteSpace(user.Osu))
+                    continue;
+                var ub = osuApi.GetUserBestByUsername(user.Osu, limit: 50);
+                if (Bot.OsuTops.ContainsKey(user.Osu))
+                    Bot.OsuTops[user.Osu] = ub;
+                else
+                    Bot.OsuTops.Add(user.Osu, ub);
+            }
+        }
+
+        public static async void OsuTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                foreach (var (key, oldTop) in Bot.OsuTops)
+                {
+                    var newTop = osuApi.GetUserBestByUsername(key, limit: 50);
+
+                    if (newTop.SequenceEqual(oldTop, comp))
+                        continue;
+
+                    for (var i = 0; i < newTop.Count; i++)
+                    {
+                        var play = newTop[i];
+                        if (play.BeatmapId == oldTop[i].BeatmapId)
+                            continue;
+
+                        var map = osuApi.GetBeatmap(play.BeatmapId);
+                        var user = osuApi.GetUserByName(key);
+                        var ts = DateTime.Now.Subtract(play.Date);
+                        var dtFlag = play.Mods.ToString().ToLower().Contains("doubletime") ||
+                                     play.Mods.ToString().ToLower().Contains("nightcore");
+
+                        var eb = new DiscordEmbedBuilder()
+                            .WithAuthor($"New #{i + 1} for {key}!", $"https://osu.ppy.sh/users/{play.Userid}",
+                                $"http://s.ppy.sh/a/{play.Userid}")
+                            .WithThumbnailUrl(map.ThumbnailUrl)
+                            .WithColor(DiscordColor.Gold)
+                            .WithDescription(
+                                $"» **[{map.Title} [{map.Difficulty}]](https://osu.ppy.sh/b/{map.BeatmapId})**\n" +
+                                $"» **{Math.Round(!dtFlag ? map.DifficultyRating : map.DifficultyRating * 1.4, 2)}★** » {TimeSpan.FromSeconds(!dtFlag ? map.TotalLength : map.TotalLength / 1.5):mm\\:ss} » {(!dtFlag ? map.Bpm : map.Bpm * 1.5)}bpm » +{play.Mods}\n" +
+                                $"» {DiscordEmoji.FromName(Bot.Client, $":{play.Rank}_Rank:")} » **{Math.Round(play.Accuracy, 2)}%** » **{Math.Round(play.Pp, 2)}pp**\n" +
+                                $"» {play.TotalScore} » x{play.MaxCombo}/{map.MaxCombo} » [{play.Count300}/{play.Count100}/{play.Count50}/{play.Miss}]\n" +
+                                $"New Global Rank: #{user.GlobalRank} (:flag_{user.Country.ToLower()}: #{user.RegionalRank})")
+                            .WithFooter(ts.Minutes == 0 ? "" : $"{ts.Minutes} minutes " + $"{ts.Seconds} seconds ago");
+                        var osuChannel = await Bot.Client.GetChannelAsync(560880902570246174);
+                        await osuChannel.SendMessageAsync(embed: eb.Build());
+                        break;
+                    }
+                }
+
+                UpdateTopPlays();
+            }
+            catch (Exception exception)
+            {
+                var meiyou = (DiscordMember) await Bot.Client.GetUserAsync(137234090309976064);
+                await meiyou.SendMessageAsync("Timer fucked up\n" + exception.Message);
+            }
+        }
+
+        private class TopPlayComparator : IEqualityComparer<UserBest>
+        {
+            public bool Equals(UserBest x, UserBest y)
+            {
+                if (x == null || y == null)
+                    return false;
+                return x.BeatmapId == y.BeatmapId;
+            }
+
+            public int GetHashCode(UserBest obj)
+            {
+                return obj.BeatmapId.GetHashCode();
+            }
+        }
+
+        private static TopPlayComparator comp = new TopPlayComparator();
+
+        private static OsuApi osuApi = new OsuApi(new OsuSharpConfiguration
         {
             ApiKey = Utilities.GetKey("osu"),
             ModsSeparator = " • "
@@ -50,6 +132,81 @@ namespace Meiyounaise.Modules
                                  $"**PP** » {Math.Round(user.Pp)}\n" +
                                  $"**Accuracy** » {Math.Round(user.Accuracy, 2)}%\n" +
                                  $"**Playcount** » {user.PlayCount}\n");
+            await ctx.RespondAsync(embed: eb.Build());
+        }
+
+        [Command("stats")]
+        public async Task OsuStats(CommandContext ctx, string username = "", int limit = 50)
+        {
+            if (username == "")
+            {
+                username = Utilities.ResolveName("osu", ctx.User);
+            }
+
+            await ctx.TriggerTypingAsync();
+            var result = await osuApi.GetUserBestAndBeatmapByUsernameAsync(username, limit: limit);
+            if (result == null || result.Count == 0)
+                throw new Exception($"No user by the name `{username}` found!");
+
+            var avgStars = 0f;
+            var fcCount = 0;
+            var avgLength = 0;
+            var avgBpm = 0f;
+            var avgPp = 0f;
+            var avgAr = 0f;
+            var avgDate = new List<DateTime>();
+            var avgRankedDate = new List<DateTime>();
+            var mapperCount = new Dictionary<string, int>();
+            var modCount = new Dictionary<string, int>();
+            foreach (var entry in result)
+            {
+                if (entry.UserBest.MaxCombo == entry.Beatmap.MaxCombo)
+                    fcCount++;
+                avgStars += entry.Beatmap.DifficultyRating;
+                avgAr += entry.Beatmap.ApproachRate;
+                avgPp += entry.UserBest.Pp;
+                avgLength += entry.Beatmap.TotalLength;
+                avgBpm += entry.Beatmap.Bpm;
+                avgDate.Add(entry.UserBest.Date);
+                avgRankedDate.Add(entry.Beatmap.ApprovedDate);
+                if (mapperCount.ContainsKey(entry.Beatmap.Creator))
+                    mapperCount[entry.Beatmap.Creator]++;
+                else
+                    mapperCount.Add(entry.Beatmap.Creator, 1);
+
+                if (modCount.ContainsKey(entry.UserBest.Mods.ToString()))
+                    modCount[entry.UserBest.Mods.ToString()]++;
+                else
+                    modCount.Add(entry.UserBest.Mods.ToString(), 1);
+            }
+
+            avgStars /= result.Count;
+            avgAr /= result.Count;
+            avgLength /= result.Count;
+            avgBpm /= result.Count;
+            avgPp /= result.Count;
+
+            var avg = avgDate.Average(x => x.TimeOfDay.TotalMilliseconds);
+            var avgRanked = (int) avgRankedDate.Average(x => x.Year);
+
+            var mostPlayedMod = modCount.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
+            var mostPlayedMapper = mapperCount.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
+
+            var eb = new DiscordEmbedBuilder()
+                .WithAuthor($"Stats for {username}", $"https://osu.ppy.sh/users/{result.First().UserBest.Userid}",
+                    $"http://s.ppy.sh/a/{result.First().UserBest.Userid}")
+                .WithColor(new DiscordColor(220, 152, 164))
+                .WithFooter("All values are averages")
+                .WithDescription($"**Star Rating** » {Math.Round(avgStars, 2)}\n" +
+                                 $"**Length** » {avgLength}s\n" +
+                                 $"**BPM** » {Math.Round(avgBpm)}\n" +
+                                 $"**AR** » {Math.Round(avgAr, 2)}\n" +
+                                 $"**PP** » {Math.Round(avgPp, 2)}\n" +
+                                 $"**Mapper** » {mostPlayedMapper}\n" +
+                                 $"**Year** » {avgRanked}\n" +
+                                 $"**Mods** » {mostPlayedMod}\n" +
+                                 $"**Perfect Combos** » {fcCount}/{result.Count}\n" +
+                                 $"**Time when submitting** » {TimeSpan.FromMilliseconds(avg):g}\n");
             await ctx.RespondAsync(embed: eb.Build());
         }
 
@@ -185,7 +342,7 @@ namespace Meiyounaise.Modules
                 Utilities.Con.Open();
                 Users.UserList.Add(new Users.User(ctx.User.Id));
                 using (var cmd =
-                    new SqliteCommand("INSERT INTO Users (id, osu) VALUES (@id, @username)",
+                    new SqliteCommand("INSERT INTO Users (id, lastfm, osu) VALUES (@id, '#', @username)",
                         Utilities.Con))
                 {
                     cmd.Parameters.AddWithValue("@username", username);
@@ -197,9 +354,19 @@ namespace Meiyounaise.Modules
                 Users.UpdateUser(ctx.User);
             }
 
+            var top = await osuApi.GetUserBestByUsernameAsync(username, limit: 50);
+            if (Bot.OsuTops.ContainsKey(username))
+            {
+                Bot.OsuTops[username] = top;
+            }
+            else
+            {
+                Bot.OsuTops.Add(username, top);
+            }
+
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
-        
+
         //Overloads//////////////////////////////////////////////////////////////////////
         [Command("top"), Priority(1)]
         public async Task OsuTop(CommandContext ctx, DiscordUser user = null)
@@ -239,7 +406,7 @@ namespace Meiyounaise.Modules
             }
         }
 
-        [Command("compare"),Priority(3)]
+        [Command("compare"), Priority(3)]
         public async Task OsuComp(CommandContext ctx, DiscordUser toComp, DiscordUser self = null)
         {
             if (self == null)
@@ -270,14 +437,15 @@ namespace Meiyounaise.Modules
 
             await OsuComp(ctx, name, sName);
         }
-        
-        [Command("compare"),Priority(2)]
+
+        [Command("compare"), Priority(2)]
         public async Task OsuComp(CommandContext ctx, DiscordUser toComp, string self = "")
         {
             if (self == "")
             {
                 self = Utilities.ResolveName("osu", ctx.User);
             }
+
             string name;
 
             try
@@ -291,8 +459,8 @@ namespace Meiyounaise.Modules
 
             await OsuComp(ctx, self, name);
         }
-        
-        [Command("compare"),Priority(1)]
+
+        [Command("compare"), Priority(1)]
         public async Task OsuComp(CommandContext ctx, string toComp, DiscordUser self = null)
         {
             if (self == null)
