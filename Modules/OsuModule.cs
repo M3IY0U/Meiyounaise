@@ -76,8 +76,7 @@ namespace Meiyounaise.Modules
             }
             catch (Exception exception)
             {
-                var meiyou = (DiscordMember) await Bot.Client.GetUserAsync(137234090309976064);
-                await meiyou.SendMessageAsync("Timer fucked up\n" + exception.Message);
+                Console.WriteLine("Timer callback failed: " + exception.Message);
             }
         }
 

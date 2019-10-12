@@ -17,7 +17,7 @@ namespace Meiyounaise.Modules
     {
         private SpotifyWebAPI _spotify;
 
-        private SpotifyWebAPI authSpotify()
+        private static SpotifyWebAPI AuthSpotify()
         {
             var auth = new ClientCredentialsAuth
             {
@@ -34,11 +34,11 @@ namespace Meiyounaise.Modules
             };
             return spotifyClient;
         }
-        
+
         [GroupCommand]
         public async Task SpotifyCommand(CommandContext ctx, [RemainingText] string input)
         {
-            _spotify = authSpotify();
+            _spotify = AuthSpotify();
             var interactivity = ctx.Client.GetInteractivity();
             var result = await _spotify.SearchItemsAsync(input, SearchType.All);
             if (!result.Albums.Items.Any() && !result.Artists.Items.Any() && !result.Tracks.Items.Any())
@@ -77,6 +77,7 @@ namespace Meiyounaise.Modules
                     {
                         pages.Add(new Page(album.ExternalUrls.First().Value));
                     }
+
                     await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages);
                     break;
                 }
@@ -100,7 +101,7 @@ namespace Meiyounaise.Modules
                     var tracks = result.Tracks.Items;
                     foreach (var track in tracks)
                     {
-                        pages.Add(new Page (track.ExternUrls.First().Value));
+                        pages.Add(new Page(track.ExternUrls.First().Value));
                     }
 
                     await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages);
@@ -116,7 +117,7 @@ namespace Meiyounaise.Modules
         [Command("album")]
         public async Task SearchAlbum(CommandContext ctx, [RemainingText] string input)
         {
-            _spotify = authSpotify();
+            _spotify = AuthSpotify();
             var result = await _spotify.SearchItemsAsync(input, SearchType.Album, 1);
             var response = result.Albums.Items.Count == 0
                 ? $"No Album found with name `{input}`!"
@@ -124,10 +125,24 @@ namespace Meiyounaise.Modules
             await ctx.RespondAsync(response);
         }
 
+        [Command("genre")]
+        public async Task Genre(CommandContext ctx, [RemainingText] string artist)
+        {
+            _spotify = AuthSpotify();
+            var result = await _spotify.SearchItemsAsync(artist, SearchType.Artist);
+            var x = result.Artists.Items.First();
+            var eb = new DiscordEmbedBuilder()
+                .WithColor(new DiscordColor("#1DB954"))
+                .WithAuthor(x.Name, x.ExternalUrls.First().Value)
+                .WithThumbnailUrl(x.Images.First().Url)
+                .WithDescription(string.Join(", ", x.Genres));
+            await ctx.RespondAsync(embed: eb.Build());
+        }
+
         [Command("artist")]
         public async Task SearchArtist(CommandContext ctx, [RemainingText] string input)
         {
-            _spotify = authSpotify();
+            _spotify = AuthSpotify();
             var result = await _spotify.SearchItemsAsync(input, SearchType.Artist, 1);
             var response = result.Artists.Items.Count == 0
                 ? $"No Artist found with name `{input}`!"
