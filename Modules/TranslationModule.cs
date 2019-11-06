@@ -72,8 +72,10 @@ namespace Meiyounaise.Modules
                 var translation = await GTranslate(text, langcode);
                 await ctx.RespondAsync(translation);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                if (e.Message.Contains("Translating failed!"))
+                    throw;
                 throw new Exception("Couldn't translate, probably because you used the wrong language code.\n" +
                                     $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
             }
@@ -143,8 +145,10 @@ namespace Meiyounaise.Modules
                 var translation = await GTranslate(message.Last().Content, langcode);
                 await ctx.RespondAsync(translation);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                if (e.Message.Contains("Translating failed!"))
+                    throw;
                 throw new Exception("Couldn't translate, probably because you used the wrong language code.\n" +
                                     $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
             }
@@ -153,8 +157,16 @@ namespace Meiyounaise.Modules
         private static async Task<string> GTranslate(string text, string lang)
         {
             var client = new GoogleTranslator();
-            var result = await client.TranslateLiteAsync(text, Language.Auto, GoogleTranslator.GetLanguageByISO(lang));
-            return result.MergedTranslation;
+            try
+            {
+                var result =
+                    await client.TranslateLiteAsync(text, Language.Auto, GoogleTranslator.GetLanguageByISO(lang));
+                return result.MergedTranslation;
+            }
+            catch (Exception)
+            {
+                throw new Exception("Translating failed!\n[» View on Google Translate]"+ $"(https://translate.google.com/#view=home&op=translate&sl=auto&tl={lang}&text={text})".Replace(" ","%20"));
+            }
         }
     }
 }

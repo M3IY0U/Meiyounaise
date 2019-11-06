@@ -28,8 +28,9 @@ namespace Meiyounaise.Modules
         private const string HtmlTemplate =
             "<meta charset=\"UTF-8\"><link href=\"https://fonts.googleapis.com/css?family=Baloo+Thambi\" rel=\"stylesheet\"><style> *{font-size: 15px !important;color: #ffffff !important;line-height: 95%; font-family: 'Baloo Thambi', cursive !important;text-shadow: -1.5px 0 #000, 0 1.5px #000, 1.5px 0 #000, 0 -1.5px #000;} body {margin: 0;}</style>";
 
-        private const string SongChartTemplate = "<!doctype html><html><head> <meta charset=\"utf-8\" /><style>body{background: #262626; font-family: sans-serif;}.center{width: 99%; position: absolute;}.skillBox{padding-bottom: 10px;}.skillBox p{letter-spacing: 0.5px; font-size: large; color: #fff; margin: 0 0 3px; padding: 0; font-weight: bold;}.skillBox p:nth-child(2){position: relative; top: -25px; float: right;}.skill{background: #262626; padding: 4px; box-sizing: border-box; border: 1px solid #bb0000;}.skill_level{background: #bb0000; width: 100%; height: 10px;}</style></head><body> <div class=\"center\">";
-        
+        private const string SongChartTemplate =
+            "<!doctype html><html><head> <meta charset=\"utf-8\" /><style>body{background: #262626; font-family: sans-serif;}.center{width: 99%; position: absolute;}.skillBox{padding-bottom: 10px;}.skillBox p{letter-spacing: 0.5px; font-size: large; color: #fff; margin: 0 0 3px; padding: 0; font-weight: bold;}.skillBox p:nth-child(2){position: relative; top: -25px; float: right;}.skill{background: #262626; padding: 4px; box-sizing: border-box; border: 1px solid #bb0000;}.skill_level{background: #bb0000; width: 100%; height: 10px;}</style></head><body> <div class=\"center\">";
+
         private static readonly LastfmClient Client = new LastfmClient(Utilities.GetKey("lastkey"),
             Utilities.GetKey("lastsecret"), new HttpClient());
 
@@ -77,7 +78,7 @@ namespace Meiyounaise.Modules
 
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
-        
+
         [GroupCommand]
         public async Task Fm(CommandContext ctx,
             [Description("The user you want to see the last track of. Leave empty for own account.")]
@@ -193,7 +194,8 @@ namespace Meiyounaise.Modules
                             $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p></div>";
                         break;
                     case "blank":
-                        html += $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"></div>";
+                        html +=
+                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"></div>";
                         break;
                     case "plays":
                         if (artist.PlayCount.HasValue)
@@ -220,11 +222,12 @@ namespace Meiyounaise.Modules
             var maxPlayCount = enumerable.First().PlayCount;
             foreach (var track in enumerable)
             {
-                if (track.PlayCount != 0) 
+                if (track.PlayCount != 0)
                     playCount = track.PlayCount + " Plays";
                 html +=
                     $"<div class=\"skillBox\"> <p>{track.Name} <i>by {track.Artist.Name}</i></p><p>{playCount}</p><div class=\"skill\"> <div class=\"skill_level\" style=\"width: {99 * track.PlayCount / maxPlayCount + 1}%\"></div></div></div>";
             }
+
             return html + "</div></body></html>";
         }
 
@@ -333,7 +336,8 @@ namespace Meiyounaise.Modules
             await GenerateImage(albums.Content.Count >= 5 ? "--width 870" : $"--width {albums.Content.Count * 174}",
                 $"--height {CalcHeight(albums.Content.Count)}", thisChart);
 
-            await ctx.RespondWithFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",$"Requested by: {thisChart.User}");
+            await ctx.RespondWithFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
+                $"Requested by: {thisChart.User}");
             DeleteCharts(thisChart.Id);
         }
 
@@ -345,7 +349,7 @@ namespace Meiyounaise.Modules
                 User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
             };
         }
-        
+
         [Command("artistchart")]
         [Description("Returns an image of your top artists scrobbled on last.fm.")]
         public async Task GenerateArtistChart(CommandContext ctx,
@@ -356,9 +360,9 @@ namespace Meiyounaise.Modules
             string username = "")
         {
             var thisChart = GenerateChart(ctx);
-            
+
             await ctx.TriggerTypingAsync();
-            
+
             var user = Users.GetUser(ctx.User);
             if (user == null && username == "")
             {
@@ -528,24 +532,30 @@ namespace Meiyounaise.Modules
         private static string ScrapeImage(LastArtist artist)
         {
             var req = (HttpWebRequest) WebRequest.Create(artist.Url);
-            var response = (HttpWebResponse)req.GetResponse();
+            var response = (HttpWebResponse) req.GetResponse();
             string result;
-            if (response.StatusCode != HttpStatusCode.OK) return "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
+            if (response.StatusCode != HttpStatusCode.OK)
+                return "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
             var receiveStream = response.GetResponseStream();
 
-            var readStream = response.CharacterSet == null ? new StreamReader(receiveStream ?? throw new Exception()) : new StreamReader(receiveStream ?? throw new Exception(), Encoding.GetEncoding(response.CharacterSet));
+            var readStream = response.CharacterSet == null
+                ? new StreamReader(receiveStream ?? throw new Exception())
+                : new StreamReader(receiveStream ?? throw new Exception(), Encoding.GetEncoding(response.CharacterSet));
             var data = readStream.ReadToEnd();
             response.Close();
             readStream.Close();
             try
             {
-                result = data.Substring(data.IndexOf("<meta property=\"og:image\"           content=\"", StringComparison.Ordinal)+45, 150);
+                result = data.Substring(
+                    data.IndexOf("<meta property=\"og:image\"           content=\"", StringComparison.Ordinal) + 45,
+                    150);
                 result = result.Remove(result.IndexOf("\"", StringComparison.Ordinal));
             }
-            catch (Exception) 
+            catch (Exception)
             {
                 result = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
             }
+
             return result;
         }
 
