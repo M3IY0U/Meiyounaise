@@ -189,7 +189,7 @@ namespace Meiyounaise.Modules
         }
 
         [Command("mock"), Aliases("spott")]
-        public async Task Mock(CommandContext ctx, string content = "")
+        public async Task Mock(CommandContext ctx, [RemainingText]string content = "")
         {
             if (content == "")
             {

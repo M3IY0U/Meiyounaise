@@ -106,6 +106,8 @@ namespace Meiyounaise.Modules
         [GroupCommand]
         public async Task Osu(CommandContext ctx, string username = "")
         {
+            if (username.ToLower() == "recent" || username.ToLower() == "rs")
+                await OsuRecent(ctx, username.Split(" ")[1]);
             if (username == "")
             {
                 if (Users.UserList.All(x => x.Id != ctx.User.Id))
@@ -235,7 +237,7 @@ namespace Meiyounaise.Modules
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor($"Comparing {ou1.Username} with {ou2.Username}",
                     iconUrl: "https://upload.wikimedia.org/wikipedia/commons/d/d3/Osu%21Logo_%282015%29.png")
-                .WithColor(new DiscordColor(220, 152, 164))
+                .WithColor(ctx.Member.Color)
                 .AddField(ou1.Username, user1String, true)
                 .AddField(ou2.Username, user2String, true)
                 .WithDescription(ou1.Pp > ou2.Pp
@@ -266,7 +268,7 @@ namespace Meiyounaise.Modules
                 content +=
                     $"**#{counter + 1} [{mapInfo.Title}](https://osu.ppy.sh/b/{map.BeatmapId})** [{mapInfo.Difficulty}] +{map.Mods} [{Math.Round(mapInfo.DifficultyRating, 2)}★]\n" +
                     $"» {DiscordEmoji.FromName(ctx.Client, $":{map.Rank}_Rank:")} » **{Math.Round(map.Pp, 2)}pp** » {Math.Round(map.Accuracy, 2)}%\n" +
-                    $"» {map.TotalScore} » {map.MaxCombo}/{mapInfo.MaxCombo} » [{map.Count100}/{map.Count50}/{map.Miss}]\n" +
+                    $"» {map.TotalScore} » {map.MaxCombo}/{mapInfo.MaxCombo} » [{map.Count300}/{map.Count100}/{map.Count50}/{map.Miss}]\n" +
                     $"» Achieved on {map.Date:dd.MM.yy H:mm:ss}\n\n";
 
                 if (++counter % 5 != 0) continue;
@@ -308,6 +310,47 @@ namespace Meiyounaise.Modules
                     $"Local Rank : #{user.RegionalRank} {DiscordEmoji.FromName(Bot.Client, $":flag_{user.Country.ToLower()}:")}");
             }
 
+            await ctx.RespondAsync(embed: eb.Build());
+        }
+
+        [Command("recent"), Aliases("rs")]
+        public async Task OsuRecent(CommandContext ctx, string username = "")
+        {
+            if (username == "")
+            {
+                if (Users.UserList.All(x => x.Id != ctx.User.Id))
+                {
+                    throw new Exception(
+                        "I don't have an osu username linked to your discord account. Set it using `osu set [Name]`.");
+                }
+
+                username = Utilities.ResolveName("osu", ctx.User);
+            }
+
+            var user = osuApi.GetUserByName(username);
+            if (user == null)
+            {
+                throw new Exception($"No user by the name `{username}` was found!");
+            }
+
+            var result = await osuApi.GetUserRecentAndBeatmapByUsernameAsync(username);
+            if (!result.Any())
+                throw new Exception($"User `{username}` has no recent plays! (past 24 hours)");
+
+            var map = result.First().Beatmap;
+            var recent = result.First().UserRecent;
+            var time = DateTime.Now.Subtract(recent.Date);
+            var timestring = time.Hours - 1 == 0 ? "" : $"{time.Hours} hours, ";
+            timestring += time.Minutes == 0 ? "" : $"{time.Minutes} minutes and ";
+            var eb = new DiscordEmbedBuilder()
+                .WithColor(ctx.Member.Color)
+                .WithAuthor($"{map.Title} [{map.Difficulty}] +{recent.Mods} [{Math.Round(map.DifficultyRating, 2)}★]",
+                    $"https://osu.ppy.sh/b/{map.BeatmapId}", $"http://s.ppy.sh/a/{recent.Userid}")
+                .WithThumbnailUrl(map.ThumbnailUrl)
+                .WithDescription(
+                    $"» {DiscordEmoji.FromName(ctx.Client, $":{recent.Rank}_Rank:")} » ?pp » {Math.Round(recent.Accuracy, 2)}%\n" +
+                    $"» {recent.ScorePoints} » x{recent.MaxCombo}/{map.MaxCombo} » [{recent.Count300}/{recent.Count100}/{recent.Count50}/{recent.Miss}]")
+                .WithFooter($"{timestring} {time.Seconds} seconds ago oN OsU! oFfIcIaL SeRvEr");
             await ctx.RespondAsync(embed: eb.Build());
         }
 
@@ -365,7 +408,8 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        //Overloads//////////////////////////////////////////////////////////////////////
+        #region Overloads
+
         [Command("top"), Priority(1)]
         public async Task OsuTop(CommandContext ctx, DiscordUser user = null)
         {
@@ -479,5 +523,7 @@ namespace Meiyounaise.Modules
 
             await OsuComp(ctx, toComp, sName);
         }
+
+        #endregion
     }
 }

@@ -163,7 +163,7 @@ namespace Meiyounaise.Modules
                             : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     default:
-                        throw new Exception($"`{option}` is not a valid Option");
+                        throw new Exception($"`{option}` is not a valid option");
                 }
 
                 if (++counter % 5 != 0) continue;
@@ -204,7 +204,7 @@ namespace Meiyounaise.Modules
                             $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     default:
-                        throw new Exception($"`{option}` is not a valid Option");
+                        throw new Exception($"`{option}` is not a valid option");
                 }
 
                 if (++counter % 5 != 0) continue;
@@ -277,7 +277,7 @@ namespace Meiyounaise.Modules
             File.Delete(Utilities.DataPath + $"{guid}.html");
         }
 
-        [Command("albumchart"), Cooldown(1, 10, CooldownBucketType.User)]
+        [Command("albumchart")]
         [Description("Returns an image of your top albums scrobbled on last.fm.")]
         public async Task GenerateAlbumChart(CommandContext ctx,
             [Description("Available timespans: overall, year, half, quarter, month and week")]
@@ -318,7 +318,7 @@ namespace Meiyounaise.Modules
 
             if (!albums.Content.Any())
             {
-                await ctx.RespondAsync("You didn't listen to any albums yet!");
+                await ctx.RespondAsync($"User `{username}` didn't listen to any albums yet!");
                 return;
             }
 
@@ -392,7 +392,7 @@ namespace Meiyounaise.Modules
 
             if (!artists.Content.Any())
             {
-                await ctx.RespondAsync("You didn't listen to any artists yet!");
+                await ctx.RespondAsync($"User `{username}` didn't listen to any artists yet!");
                 return;
             }
 
@@ -470,7 +470,7 @@ namespace Meiyounaise.Modules
 
             if (songs.Toptracks.Track.Count == 0)
             {
-                await ctx.RespondAsync("You didn't listen to any songs yet!");
+                await ctx.RespondAsync($"User `{username}` didn't listen to any songs yet!");
                 return;
             }
 
@@ -569,5 +569,81 @@ namespace Meiyounaise.Modules
             public string Id { get; set; }
             public string User { get; set; }
         }
+
+        #region Overloads
+        
+        [Command("songchart"), Priority(1)]
+        [Description("Returns an image of your top songs scrobbled on last.fm.")]
+        public async Task GenerateSongChart(CommandContext ctx,
+            [Description("Available Timespans: overall, year, half, quarter, month and week")]
+            string timespan = "overall",
+            [Description("The username whose songchart you want to generate. Leave blank for own account.")]
+            DiscordUser user = null)
+        {
+            if (user == null)
+            {
+                user = ctx.User;
+            }
+
+            try
+            {
+                var name = Utilities.ResolveName("last", user);
+                await GenerateSongChart(ctx, timespan, name);
+            }
+            catch (Exception)
+            {
+                await GenerateSongChart(ctx, timespan, user.Username);
+            }
+        }
+
+        [Command("albumchart"), Priority(1)]
+        [Description("Returns an image of your top albums scrobbled on last.fm.")]
+        public async Task GenerateAlbumChart(CommandContext ctx,
+            [Description("Available timespans: overall, year, half, quarter, month and week")]
+            string timespan = "", [Description("Available options: all, names, plays, blank")]
+            string option = "all",
+            [Description("The username whose albumchart you want to generate. Leave blank for own account.")]
+            DiscordUser user = null)
+        {
+            if (user == null)
+            {
+                user = ctx.User;
+            }
+
+            try
+            {
+                var name = Utilities.ResolveName("last", user);
+                await GenerateAlbumChart(ctx, timespan, option, name);
+            }
+            catch (Exception)
+            {
+                await GenerateAlbumChart(ctx, timespan, option, user.Username);
+            }   
+        }
+
+        [Command("artistchart"), Priority(1)]
+        public async Task GenerateArtistChart(CommandContext ctx,
+            [Description("Available Timespans: overall, year, half, quarter, month and week")]
+            string timespan = "", [Description("Available Options: all, names, plays, blank")]
+            string option = "all",
+            [Description("The username whose artistchart you want to generate. Leave blank for own account.")]
+            DiscordUser user = null)
+        {
+            if (user == null)
+            {
+                user = ctx.User;
+            }
+
+            try
+            {
+                var name = Utilities.ResolveName("last", user);
+                await GenerateArtistChart(ctx, timespan, option, name);
+            }
+            catch (Exception)
+            {
+                await GenerateArtistChart(ctx, timespan, option, user.Username);
+            }
+        }
+        #endregion
     }
 }
