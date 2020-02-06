@@ -297,7 +297,22 @@ namespace Meiyounaise.Modules
         public async Task Update(CommandContext ctx)
         {
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("👋"));
-            Process.Start("git", "pull");
+            var output = "Output:\n```";
+            using (var exeProcess = Process.Start(new ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments ="pull",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }))
+            {
+                exeProcess?.WaitForExit();
+                output += exeProcess?.StandardOutput.ReadToEnd();
+                output += exeProcess?.StandardError.ReadToEnd().Length != 0 ? $"\n```\nError:\n``` {exeProcess?.StandardError.ReadToEnd()}" : "";
+            }
+
+            await ctx.RespondAsync(output + "\n```");
             await Task.Delay(5000);
             Process.Start("dotnet", "run MeiyounaiseRewrite.sln");
             Environment.Exit(0);
