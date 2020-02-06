@@ -269,7 +269,7 @@ namespace Meiyounaise.Modules
             }
 
             var gm = GameMode.Standard;
-            switch (gamemode)
+            switch (gamemode.ToLower())
             {
                 case "standard":
                 case "s":

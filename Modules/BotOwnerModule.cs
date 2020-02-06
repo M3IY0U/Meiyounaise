@@ -125,7 +125,7 @@ namespace Meiyounaise.Modules
             var rmsg = await ctx.RespondAsync($"This will make the bot leave guild {guildToLeave.Name}. Are you sure?");
             await rmsg.CreateReactionAsync(emojis[0]);
             await rmsg.CreateReactionAsync(emojis[1]);
-            
+
             //var t = await interactivity.WaitForMessageReactionAsync(rmsg, ctx.User);
             var t = await interactivity.WaitForReactionAsync(rmsg, ctx.User);
             if (t.Result.Emoji.GetDiscordName() == ":x:")
@@ -223,6 +223,7 @@ namespace Meiyounaise.Modules
                     return;
                 }
             }
+
             Utilities.Con.Close();
         }
 
@@ -237,6 +238,7 @@ namespace Meiyounaise.Modules
             {
                 Users.UpdateUser(user);
             }
+
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
@@ -258,11 +260,12 @@ namespace Meiyounaise.Modules
 
             if (sb.Length > 2000)
             {
-                File.WriteAllText("messages.txt",sb.ToString());
+                File.WriteAllText("messages.txt", sb.ToString());
                 await ctx.RespondWithFileAsync("messages.txt");
                 File.Delete("messages.txt");
                 return;
             }
+
             await ctx.RespondAsync(sb.ToString());
         }
 
@@ -275,7 +278,8 @@ namespace Meiyounaise.Modules
             };
             try
             {
-                await CSharpScript.EvaluateAsync(input.Trim('`'), ScriptOptions.Default.WithReferences(typeof(System.Net.Dns).Assembly), globals);
+                await CSharpScript.EvaluateAsync(input.Trim('`'),
+                    ScriptOptions.Default.WithReferences(typeof(System.Net.Dns).Assembly), globals);
             }
             catch (Exception)
             {
@@ -283,11 +287,22 @@ namespace Meiyounaise.Modules
                 GC.Collect();
                 throw;
             }
+
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
             GC.WaitForPendingFinalizers();
             GC.Collect();
         }
-        
+
+        [Command("update"), RequireOwner, Hidden]
+        public async Task Update(CommandContext ctx)
+        {
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("👋"));
+            Process.Start("git", "pull");
+            await Task.Delay(5000);
+            Process.Start("dotnet", "run MeiyounaiseRewrite.sln");
+            Environment.Exit(0);
+        }
+
         public class Globals
         {
             public CommandContext Ctx;
