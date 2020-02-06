@@ -297,31 +297,35 @@ namespace Meiyounaise.Modules
         public async Task Update(CommandContext ctx)
         {
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("👋"));
-            var output = "Output:\n```";
+
             using (var exeProcess = Process.Start(new ProcessStartInfo
             {
                 FileName = "git",
-                Arguments ="pull",
+                Arguments = "pull",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             }))
             {
                 exeProcess?.WaitForExit();
-                output += exeProcess?.StandardOutput.ReadToEnd();
-                output += exeProcess?.StandardError.ReadToEnd().Length != 0 ? $"\n```\nError:\n``` {exeProcess?.StandardError.ReadToEnd()}" : "";
+                var output = exeProcess?.StandardOutput.ReadToEnd();
+                var error = exeProcess?.StandardError.ReadToEnd();
+                
+                if(!string.IsNullOrEmpty(output))
+                    await ctx.RespondAsync($"Output:```\n{output}\n```");
+                if (!string.IsNullOrEmpty(error))
+                    await ctx.RespondAsync($"Error:```\n{error}\n```");
             }
 
-            await ctx.RespondAsync(output + "\n```");
+
             await Task.Delay(5000);
             Process.Start("dotnet", "run MeiyounaiseRewrite.sln");
             Environment.Exit(0);
         }
 
         [Command("run"), Aliases("execute", "exec"), RequireOwner, Hidden]
-        public async Task Run(CommandContext ctx, string cmd, [RemainingText]string arguments = "")
+        public async Task Run(CommandContext ctx, string cmd, [RemainingText] string arguments = "")
         {
-            var output = "Output:\n```";
             using (var exeProcess = Process.Start(new ProcessStartInfo
             {
                 FileName = cmd,
@@ -332,11 +336,14 @@ namespace Meiyounaise.Modules
             }))
             {
                 exeProcess?.WaitForExit();
-                output += exeProcess?.StandardOutput.ReadToEnd();
-                output += exeProcess?.StandardError.ReadToEnd().Length != 0 ? $"\n```\nError:\n``` {exeProcess?.StandardError.ReadToEnd()}" : "";
+                var output = exeProcess?.StandardOutput.ReadToEnd();
+                var error = exeProcess?.StandardError.ReadToEnd();
+                
+                if(!string.IsNullOrEmpty(output))
+                    await ctx.RespondAsync($"Output:```\n{output}\n```");
+                if (!string.IsNullOrEmpty(error))
+                    await ctx.RespondAsync($"Error:```\n{error}\n```");
             }
-
-            await ctx.RespondAsync(output+ "\n```");
         }
 
         public class Globals
