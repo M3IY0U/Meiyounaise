@@ -11,6 +11,8 @@ using Meiyounaise.DB;
 using Microsoft.Data.Sqlite;
 using OsuSharp;
 using OsuSharp.Endpoints;
+using OsuSharp.Enums;
+using OsuSharp.Misc;
 
 namespace Meiyounaise.Modules
 {
@@ -166,8 +168,19 @@ namespace Meiyounaise.Modules
                 avgStars += entry.Beatmap.DifficultyRating;
                 avgAr += entry.Beatmap.ApproachRate;
                 avgPp += entry.UserBest.Pp;
-                avgLength += entry.Beatmap.TotalLength;
-                avgBpm += entry.Beatmap.Bpm;
+
+                if (entry.UserBest.Mods.ToString().ToLower().Contains("nightcore") ||
+                    entry.UserBest.Mods.ToString().ToLower().Contains("doubletime"))
+                {
+                    avgBpm += (int) (entry.Beatmap.Bpm * 1.5);
+                    avgLength += (int) (entry.Beatmap.TotalLength / 1.5);
+                }
+                else
+                {
+                    avgBpm += entry.Beatmap.Bpm;
+                    avgLength += entry.Beatmap.TotalLength;
+                }
+
                 avgDate.Add(entry.UserBest.Date);
                 avgRankedDate.Add(entry.Beatmap.ApprovedDate);
                 if (mapperCount.ContainsKey(entry.Beatmap.Creator))
@@ -247,7 +260,7 @@ namespace Meiyounaise.Modules
         }
 
         [Command("top")]
-        public async Task OsuTop(CommandContext ctx, string username = "")
+        public async Task OsuTop(CommandContext ctx, string gamemode = "standard", [RemainingText] string username = "")
         {
             await ctx.TriggerTypingAsync();
             if (username == "")
@@ -255,8 +268,30 @@ namespace Meiyounaise.Modules
                 username = Utilities.ResolveName("osu", ctx.User);
             }
 
+            var gm = GameMode.Standard;
+            switch (gamemode)
+            {
+                case "standard":
+                case "s":
+                    break;
+                case "taiko":
+                case "t":
+                    gm = GameMode.Taiko;
+                    break;
+                case "catch":
+                case "c":
+                    gm = GameMode.Catch;
+                    break;
+                case "mania":
+                case "m":
+                    gm = GameMode.Mania;
+                    break;
+                default:
+                    throw new Exception("Invalid Gamemode provided!");
+            }
+
             var user = await osuApi.GetUserByNameAsync(username);
-            var result = await osuApi.GetUserBestByUsernameAsync(username, limit: 50);
+            var result = await osuApi.GetUserBestByUsernameAsync(username, limit: 50, gameMode: gm);
             var pages = new List<Page>();
             var counter = 0;
 
@@ -264,7 +299,7 @@ namespace Meiyounaise.Modules
             var content = "";
             foreach (var map in result)
             {
-                var mapInfo = await osuApi.GetBeatmapAsync(map.BeatmapId);
+                var mapInfo = await osuApi.GetBeatmapAsync(map.BeatmapId, gameMode: gm);
                 content +=
                     $"**#{counter + 1} [{mapInfo.Title}](https://osu.ppy.sh/b/{map.BeatmapId})** [{mapInfo.Difficulty}] +{map.Mods} [{Math.Round(mapInfo.DifficultyRating, 2)}★]\n" +
                     $"» {DiscordEmoji.FromName(ctx.Client, $":{map.Rank}_Rank:")} » **{Math.Round(map.Pp, 2)}pp** » {Math.Round(map.Accuracy, 2)}%\n" +
@@ -340,7 +375,7 @@ namespace Meiyounaise.Modules
             var map = result.First().Beatmap;
             var recent = result.First().UserRecent;
             var time = DateTime.Now.Subtract(recent.Date);
-            var timestring = time.Hours - 1 == 0 ? "" : $"{time.Hours} hours, ";
+            var timestring = time.Hours - 1 <= 0 ? "" : $"{time.Hours} hours, ";
             timestring += time.Minutes == 0 ? "" : $"{time.Minutes} minutes and ";
             var eb = new DiscordEmbedBuilder()
                 .WithColor(ctx.Member.Color)

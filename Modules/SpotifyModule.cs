@@ -130,13 +130,13 @@ namespace Meiyounaise.Modules
         {
             _spotify = AuthSpotify();
             var result = await _spotify.SearchItemsAsync(artist, SearchType.Artist);
-            var x = result.Artists.Items.First();
-            var eb = new DiscordEmbedBuilder()
-                .WithColor(new DiscordColor("#1DB954"))
-                .WithAuthor(x.Name, x.ExternalUrls.First().Value)
-                .WithThumbnailUrl(x.Images.First().Url)
-                .WithDescription(string.Join(", ", x.Genres));
-            await ctx.RespondAsync(embed: eb.Build());
+            var pages = result.Artists.Items.Select(a => new DiscordEmbedBuilder().WithColor(new DiscordColor("#1DB954"))
+                    .WithAuthor(a.Name, a.ExternalUrls.First().Value)
+                    .WithThumbnailUrl(a.Images.First().Url)
+                    .WithDescription(string.Join(", ", a.Genres)))
+                .Select(eb => new Page(embed: eb))
+                .ToList();
+            await ctx.Client.GetInteractivity().SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
         }
 
         [Command("artist")]

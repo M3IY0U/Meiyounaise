@@ -296,13 +296,16 @@ namespace Meiyounaise.DB
         {
             if (e.Exception.Message.Contains("command was not found"))
             {
+                if (e.Context.Message.Content.StartsWith("$wie"))
+                    return;
                 await e.Context.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("❓"));
                 return;
             }
 
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordColor.Red)
-                .WithAuthor("Command Execution failed!", iconUrl: "https://www.shareicon.net/data/128x128/2016/08/18/810028_close_512x512.png")
+                .WithAuthor("Command Execution failed!",
+                    iconUrl: "https://www.shareicon.net/data/128x128/2016/08/18/810028_close_512x512.png")
                 .WithDescription(e.Exception.Message);
 
             if (e.Exception.Message.Contains("pre-execution checks failed"))
@@ -312,15 +315,20 @@ namespace Meiyounaise.DB
                 {
                     if (!await check.ExecuteCheckAsync(e.Context, false))
                     {
-                        checks.Add(check.ToString().Substring(check.ToString().LastIndexOf(".", StringComparison.Ordinal)+1).Replace("Attribute", string.Empty));
+                        checks.Add(check.ToString()
+                            .Substring(check.ToString().LastIndexOf(".", StringComparison.Ordinal) + 1)
+                            .Replace("Attribute", string.Empty));
                     }
                 }
+
                 eb.AddField("Failed Pre-Execution checks:", string.Join(", ", checks));
             }
-            if (e.Exception.InnerException!=null)
+
+            if (e.Exception.InnerException != null)
             {
                 eb.AddField("Inner Exception:", e.Exception.InnerException.Message);
             }
+
             await e.Context.RespondAsync(embed: eb.Build());
         }
 
@@ -332,22 +340,22 @@ namespace Meiyounaise.DB
             if (Guilds.GetGuild(e.Guild).PrevMessageAmount == 0) return;
             //Put current guild the message was received in into variable
             var guild = Guilds.GetGuild(e.Guild);
-        
+
             //Add channel if it isn't already in the dictionary
             if (!guild.PrevMessages.ContainsKey(e.Channel.Id))
             {
                 guild.PrevMessages.TryAdd(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(e.Message, 0));
             }
-        
+
             var (_, value) = guild.PrevMessages[e.Channel.Id];
-        
+
             if (guild.PrevMessages[e.Channel.Id].Key == null)
             {
                 guild.PrevMessages.TryUpdate(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(e.Message, 1),
                     guild.PrevMessages[e.Channel.Id]);
                 return;
             }
-        
+
             //Check for the same content
             if (guild.PrevMessages[e.Channel.Id].Key.Content == e.Message.Content &&
                 guild.PrevMessages[e.Channel.Id].Key.Author != e.Message.Author)
@@ -362,7 +370,7 @@ namespace Meiyounaise.DB
                 guild.PrevMessages.TryUpdate(e.Channel.Id, new KeyValuePair<DiscordMessage, int>(e.Message, 1),
                     guild.PrevMessages[e.Channel.Id]);
             }
-        
+
             if (guild.PrevMessages[e.Channel.Id].Value >= guild.PrevMessageAmount)
             {
                 //Send message and reset count/last message

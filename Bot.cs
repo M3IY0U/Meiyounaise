@@ -7,6 +7,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using MarkovSharp.TokenisationStrategies;
 using Meiyounaise.Modules;
 using OsuSharp.Endpoints;
 using Timer = System.Timers.Timer;
@@ -19,6 +20,7 @@ namespace Meiyounaise
         private CommandsNextExtension _cnext;
         public static InteractivityExtension Interactivity;
         private CancellationTokenSource _cts;
+        public static StringMarkov MarkovModel;
         public static Dictionary<string, List<UserBest>> OsuTops = new Dictionary<string, List<UserBest>>();
 
         public Bot()
@@ -49,15 +51,15 @@ namespace Meiyounaise
             _cnext.CommandErrored += DB.EventHandlers.CommandErrored;
 
             Client.Ready += DB.EventHandlers.Ready;
+            Client.MessageCreated += DB.Bridge.Message;
             Client.GuildCreated += DB.EventHandlers.GuildCreated;
             Client.GuildMemberAdded += DB.EventHandlers.UserJoined;
+            Client.MessageCreated += DB.EventHandlers.MessageCreated;
             Client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
             Client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
             Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
-            Client.MessageCreated += DB.EventHandlers.MessageCreated;
-            Client.MessageCreated += DB.Bridge.Message;
             OsuModule.UpdateTopPlays();
-            
+            MarkovModel = new StringMarkov(1);
             var osuTimer = new Timer
             {
                 Interval = 120000,

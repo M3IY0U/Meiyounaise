@@ -8,7 +8,6 @@ using CoolAsciiFaces;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Markov;
 using Meiyounaise.DB;
 
 namespace Meiyounaise.Modules
@@ -86,7 +85,7 @@ namespace Meiyounaise.Modules
 
         [Command("markov"), Aliases("sentence"), Description("Generates a \"sentence\" from the last 50 messages.")]
         public async Task Markov(CommandContext ctx, [Description("How many messages the bot should look at.")]
-            int amount = 50, int order = 0)
+            int amount = 50, int level = 1)
         {
             if (amount >= 10000)
                 amount = 10000;
@@ -100,7 +99,7 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await ctx.RespondAsync(MarkovResponse(order, lines));
+            await ctx.RespondAsync(MarkovResponse(level, lines));
         }
 
         [Command("markov"),
@@ -109,7 +108,7 @@ namespace Meiyounaise.Modules
             DiscordChannel channel, [Description("Which user's messages the bot should look at.")]
             DiscordUser user,
             [Description("How many messages the bot should look at.")]
-            int amount = 500, int order = 0)
+            int amount = 500, int level = 1)
         {
             if (amount >= 10000)
                 amount = 10000;
@@ -124,13 +123,13 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await ctx.RespondAsync(MarkovResponse(order, lines));
+            await ctx.RespondAsync(MarkovResponse(level, lines));
         }
 
         [Command("markov"), Description("Generates a \"sentence\" from the last 50 messages by a specific user.")]
         public async Task MarkovUser(CommandContext ctx, [Description("Which user's messages the bot should look at.")]
             DiscordUser user, [Description("How many messages the bot should look at.")]
-            int amount = 500, int order = 0)
+            int amount = 500, int level = 1)
         {
             if (amount >= 10000)
                 amount = 10000;
@@ -145,13 +144,13 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await ctx.RespondAsync(MarkovResponse(order, lines));
+            await ctx.RespondAsync(MarkovResponse(level, lines));
         }
 
         [Command("markov"), Description("Generates a \"sentence\" from the last 50 messages in a specific channel.")]
         public async Task MarkovChannel(CommandContext ctx, [Description("Which channel the bot should look at.")]
             DiscordChannel channel, [Description("How many messages the bot should look at.")]
-            int amount = 50, int order = 0)
+            int amount = 50, int level = 1)
         {
             if (amount >= 10000)
                 amount = 10000;
@@ -165,31 +164,19 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            await ctx.RespondAsync(MarkovResponse(order, lines));
+            await ctx.RespondAsync(MarkovResponse(level, lines));
         }
 
-        private static string MarkovResponse(int order, IEnumerable<string> lines)
+        private static string MarkovResponse(int level, IEnumerable<string> lines)
         {
-            var chain = new MarkovChain<string>(order);
-            foreach (var line in lines)
-            {
-                chain.Add(line.Split());
-            }
-
-            var response = string.Join(" ", chain.Chain());
-            if (response != "") return response;
-            var count = 0;
-            while (response == "")
-            {
-                response = string.Join(" ", chain.Chain());
-                if (count++ > 10) return "Chaining failed!";
-            }
-
-            return response;
+            if (level != Bot.MarkovModel.Level)
+                Bot.MarkovModel.Retrain(level);
+            Bot.MarkovModel.Learn(lines, false);
+            return Bot.MarkovModel.Walk().First();
         }
 
         [Command("mock"), Aliases("spott")]
-        public async Task Mock(CommandContext ctx, [RemainingText]string content = "")
+        public async Task Mock(CommandContext ctx, [RemainingText] string content = "")
         {
             if (content == "")
             {
@@ -218,7 +205,7 @@ namespace Meiyounaise.Modules
         public async Task Tts(CommandContext ctx, [RemainingText] string message)
         {
             await Utilities.DownloadAsync(
-                new Uri($"https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={message}"), "speech.mp3");
+                new Uri($"https://api.streamelements.com/kappa/v2/speech?voice=Hans&text={message}"), "speech.mp3");
             await ctx.RespondWithFileAsync("speech.mp3");
             File.Delete("speech.mp3");
         }

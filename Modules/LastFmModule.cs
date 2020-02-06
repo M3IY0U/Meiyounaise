@@ -130,6 +130,24 @@ namespace Meiyounaise.Modules
             await ctx.RespondAsync("", false, embed.Build());
         }
 
+        [GroupCommand, Priority(1)]
+        public async Task FmUser(CommandContext ctx, DiscordUser user)
+        {
+            try
+            {
+                await Fm(ctx, Utilities.ResolveName("last", user));
+            }
+            catch (Exception e)
+            {
+                if (!e.Message.Contains("No username set for the requested service!") &&
+                    !e.Message.Contains("Username could not be resolved"))
+                {
+                    await Fm(ctx, user.Username);
+                }
+                throw new Exception("This user has not set their last.fm account yet!");
+            }
+        }
+
         private static string GenerateHtml(IEnumerable<LastAlbum> albums, string html, string option)
         {
             var counter = 0;
@@ -288,7 +306,6 @@ namespace Meiyounaise.Modules
         {
             var thisChart = GenerateChart(ctx);
             await ctx.TriggerTypingAsync();
-
             var user = Users.GetUser(ctx.User);
             if (user == null && username == "")
             {
@@ -571,7 +588,7 @@ namespace Meiyounaise.Modules
         }
 
         #region Overloads
-        
+
         [Command("songchart"), Priority(1)]
         [Description("Returns an image of your top songs scrobbled on last.fm.")]
         public async Task GenerateSongChart(CommandContext ctx,
@@ -618,7 +635,7 @@ namespace Meiyounaise.Modules
             catch (Exception)
             {
                 await GenerateAlbumChart(ctx, timespan, option, user.Username);
-            }   
+            }
         }
 
         [Command("artistchart"), Priority(1)]
@@ -644,6 +661,7 @@ namespace Meiyounaise.Modules
                 await GenerateArtistChart(ctx, timespan, option, user.Username);
             }
         }
+
         #endregion
     }
 }
