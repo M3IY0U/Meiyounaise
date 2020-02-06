@@ -1,10 +1,12 @@
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using Meiyounaise.DB;
 using Microsoft.Data.Sqlite;
+using Newtonsoft.Json;
 
 namespace Meiyounaise
 {
@@ -61,6 +63,18 @@ namespace Meiyounaise
             return result;
         }
 
+        public static async Task<string> ToHastebin(string content)
+        {
+            using (var client = new HttpClient())
+            {
+                var response = await client.PostAsync("https://haste.timostestdoma.in/documents",
+                    new StringContent(content, Encoding.UTF8));
+                var rs = await response.Content.ReadAsStringAsync();
+                var data = JsonConvert.DeserializeObject<dynamic>(rs);
+                return $"https://haste.timostestdoma.in/{data.key}";
+            }
+        }
+        
         public static async Task DownloadAsync(Uri requestUri, string filename)
         {
             GC.Collect();

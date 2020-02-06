@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
@@ -46,6 +47,19 @@ namespace Meiyounaise.DB
 
             Utilities.Con.Close();
 
+            try
+            {
+                var file = new StreamReader("update.txt");
+                var chn = await Bot.Client.GetChannelAsync(Convert.ToUInt64(file.ReadLine()));
+                await chn.SendMessageAsync(
+                    $"Back online.\nRestart took {Math.Round(DateTime.Now.Subtract(DateTime.Parse(file.ReadLine())).TotalSeconds), 2} seconds.");
+                file.Close();
+                File.Delete("update.txt");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Tried to announce time it took to restart but couldn't because of: {ex.Message}");
+            }
             //Update the "Playing" status to something random
             await Status(e);
         }
