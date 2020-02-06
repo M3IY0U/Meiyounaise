@@ -269,7 +269,7 @@ namespace Meiyounaise.Modules
             await ctx.RespondAsync(sb.ToString());
         }
 
-        [Command("execute"), Aliases("exec", "run"), RequireOwner, Hidden]
+        [Command("eval"), RequireOwner, Hidden]
         public async Task Eval(CommandContext ctx, [RemainingText] string input)
         {
             var globals = new Globals
@@ -316,6 +316,27 @@ namespace Meiyounaise.Modules
             await Task.Delay(5000);
             Process.Start("dotnet", "run MeiyounaiseRewrite.sln");
             Environment.Exit(0);
+        }
+
+        [Command("run"), Aliases("execute", "exec"), RequireOwner, Hidden]
+        public async Task Run(CommandContext ctx, string cmd, [RemainingText]string arguments = "")
+        {
+            var output = "Output:\n```";
+            using (var exeProcess = Process.Start(new ProcessStartInfo
+            {
+                FileName = cmd,
+                Arguments = arguments,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }))
+            {
+                exeProcess?.WaitForExit();
+                output += exeProcess?.StandardOutput.ReadToEnd();
+                output += exeProcess?.StandardError.ReadToEnd().Length != 0 ? $"\n```\nError:\n``` {exeProcess?.StandardError.ReadToEnd()}" : "";
+            }
+
+            await ctx.RespondAsync(output+ "\n```");
         }
 
         public class Globals
