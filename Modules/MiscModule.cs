@@ -24,8 +24,7 @@ namespace Meiyounaise.Modules
             {
                 if (!DateTime.TryParse(time, out dtime))
                 {
-                    await ctx.RespondAsync("Couldn't parse time!");
-                    return;
+                    throw new Exception("Couldn't parse time!");
                 }
             }
 

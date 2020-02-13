@@ -12,7 +12,6 @@ using Microsoft.Data.Sqlite;
 using OsuSharp;
 using OsuSharp.Endpoints;
 using OsuSharp.Enums;
-using OsuSharp.Misc;
 
 namespace Meiyounaise.Modules
 {

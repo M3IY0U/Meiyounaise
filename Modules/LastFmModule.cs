@@ -40,8 +40,7 @@ namespace Meiyounaise.Modules
         {
             if (username == "")
             {
-                await ctx.RespondAsync("I need a name that I can link to your account!");
-                return;
+                throw new Exception("I need a name that I can link to your account!");
             }
 
             if (Users.UserList.Any(x => x.Id == ctx.User.Id))
@@ -127,7 +126,7 @@ namespace Meiyounaise.Modules
                     response.Content.First().AlbumName != ""
                         ? $"[{response.Content.First().AlbumName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().AlbumName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})"
                         : "No album linked on last.fm!");
-            await ctx.RespondAsync("", false, embed.Build());
+            await ctx.RespondAsync( embed: embed.Build());
         }
 
         [GroupCommand, Priority(1)]
@@ -192,13 +191,17 @@ namespace Meiyounaise.Modules
             return html;
         }
 
-        private static string GenerateHtml(IEnumerable<LastArtist> artists, string html, string option)
+        private static string GenerateHtml(IEnumerable<LastArtist> artists, string html, string option, DiscordMessage msg)
         {
             var counter = 0;
+            var progress = 0;
             var playCount = "";
-            foreach (var artist in artists)
+            var lastArtists = artists.ToList();
+            foreach (var artist in lastArtists)
             {
+                progress++;
                 var imageUrl = ScrapeImage(artist);
+                msg.ModifyAsync($"༼ つ ◕_◕ ༽つ Collecting Artists [{progress}/{lastArtists.Count}]");
                 switch (option.ToLower())
                 {
                     case "all":
@@ -229,7 +232,7 @@ namespace Meiyounaise.Modules
                 html += "<br>";
                 counter = 0;
             }
-
+            msg.ModifyAsync("(ง •̀_•́)ง Generating Image");
             return html;
         }
 
@@ -322,21 +325,17 @@ namespace Meiyounaise.Modules
             {
                 if (username == "")
                 {
-                    await ctx.RespondAsync("last.fm's response was not successful, try again later!");
-                }
-                else
-                {
-                    await ctx.RespondAsync(
-                        $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+                    throw new Exception("last.fm's response was not successful, try again later!");
                 }
 
-                return;
+                throw new Exception(
+                    $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+
             }
 
             if (!albums.Content.Any())
             {
-                await ctx.RespondAsync($"User `{username}` didn't listen to any albums yet!");
-                return;
+                throw new Exception($"User `{username}` didn't listen to any albums yet!");
             }
 
             try
@@ -346,8 +345,7 @@ namespace Meiyounaise.Modules
             }
             catch (Exception e)
             {
-                await ctx.RespondAsync(e.Message);
-                return;
+                throw new Exception(e.Message);
             }
 
             await GenerateImage(albums.Content.Count >= 5 ? "--width 870" : $"--width {albums.Content.Count * 174}",
@@ -377,7 +375,8 @@ namespace Meiyounaise.Modules
             string username = "")
         {
             var thisChart = GenerateChart(ctx);
-
+            
+            var msg = await ctx.RespondAsync("This will probably take while (thank you last.fm api very cool)");
             await ctx.TriggerTypingAsync();
 
             var user = Users.GetUser(ctx.User);
@@ -388,7 +387,7 @@ namespace Meiyounaise.Modules
             }
 
             //If a name was provided, generate a chart for that user
-            var name = username == "" ? user?.Last : username;
+            var name = user?.Last ?? username;
 
             //Get the top 25 artists on last.fm
             var artists = await Client.User.GetTopArtists(name, (LastStatsTimeSpan) ConvertTimeSpan(timespan), 1, 25);
@@ -396,33 +395,27 @@ namespace Meiyounaise.Modules
             {
                 if (username == "")
                 {
-                    await ctx.RespondAsync("last.fm's response was not successful, try again later!");
-                }
-                else
-                {
-                    await ctx.RespondAsync(
-                        $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+                    throw new Exception("last.fm's response was not successful, try again later!");
                 }
 
-                return;
+                throw new Exception(
+                    $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
 
             if (!artists.Content.Any())
             {
-                await ctx.RespondAsync($"User `{username}` didn't listen to any artists yet!");
-                return;
+                throw new Exception($"User `{username}` didn't listen to any artists yet!");
             }
 
             try
             {
-                var html = GenerateHtml(artists, HtmlTemplate, option);
+                var html = GenerateHtml(artists, HtmlTemplate, option, msg);
                 File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",
                     html);
             }
             catch (Exception e)
             {
-                await ctx.RespondAsync(e.Message);
-                return;
+                throw new Exception(e.Message);
             }
 
             await GenerateImage(artists.Content.Count >= 5 ? "--width 870" : $"--width {artists.Content.Count * 174}",
@@ -431,6 +424,7 @@ namespace Meiyounaise.Modules
             await ctx.Channel.SendFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
                 $"Requested by: {thisChart.User}");
             DeleteCharts(thisChart.Id);
+            await msg.DeleteAsync();
         }
 
         [Command("songchart")]
@@ -452,12 +446,11 @@ namespace Meiyounaise.Modules
             var user = Users.GetUser(ctx.User);
             if (user == null && username == "")
             {
-                await ctx.RespondAsync(
+                throw new Exception(
                     $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
-                return;
             }
 
-            var name = username == "" ? user?.Last : username;
+            var name =  user?.Last ?? username;
 
             SongResponse songs;
             try
@@ -466,29 +459,21 @@ namespace Meiyounaise.Modules
             }
             catch (Exception e)
             {
-                await ctx.RespondAsync(e.Message);
-                return;
+                throw new Exception(e.Message);
             }
 
             if (songs == null)
             {
                 if (username == "")
                 {
-                    await ctx.RespondAsync("last.fm's response was not successful, try again later!");
+                    throw new Exception("last.fm's response was not successful, try again later!");
                 }
-                else
-                {
-                    await ctx.RespondAsync(
-                        $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
-                }
-
-                return;
+                throw new Exception($"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
 
             if (songs.Toptracks.Track.Count == 0)
             {
-                await ctx.RespondAsync($"User `{username}` didn't listen to any songs yet!");
-                return;
+                throw new Exception($"User `{username}` didn't listen to any songs yet!");
             }
 
             try
@@ -498,8 +483,7 @@ namespace Meiyounaise.Modules
             }
             catch (Exception e)
             {
-                await ctx.RespondAsync(e.Message);
-                return;
+                throw new Exception(e.Message);
             }
 
             await GenerateImage(
