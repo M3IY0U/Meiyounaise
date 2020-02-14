@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -126,7 +124,7 @@ namespace Meiyounaise.Modules
                     response.Content.First().AlbumName != ""
                         ? $"[{response.Content.First().AlbumName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().AlbumName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})"
                         : "No album linked on last.fm!");
-            await ctx.RespondAsync( embed: embed.Build());
+            await ctx.RespondAsync(embed: embed.Build());
         }
 
         [GroupCommand, Priority(1)]
@@ -143,6 +141,7 @@ namespace Meiyounaise.Modules
                 {
                     await Fm(ctx, user.Username);
                 }
+
                 throw new Exception("This user has not set their last.fm account yet!");
             }
         }
@@ -191,17 +190,13 @@ namespace Meiyounaise.Modules
             return html;
         }
 
-        private static string GenerateHtml(IEnumerable<LastArtist> artists, string html, string option, DiscordMessage msg)
+        private static async Task<string> GenerateHtml(IEnumerable<LastArtist> artists, string html, string option)
         {
             var counter = 0;
-            var progress = 0;
             var playCount = "";
-            var lastArtists = artists.ToList();
-            foreach (var artist in lastArtists)
+            var lastArtists = await CollectArtists(artists);
+            foreach (var (artist, imageUrl) in lastArtists)
             {
-                progress++;
-                var imageUrl = ScrapeImage(artist);
-                msg.ModifyAsync($"༼ つ ◕_◕ ༽つ Collecting Artists [{progress}/{lastArtists.Count}]");
                 switch (option.ToLower())
                 {
                     case "all":
@@ -232,7 +227,7 @@ namespace Meiyounaise.Modules
                 html += "<br>";
                 counter = 0;
             }
-            msg.ModifyAsync("(ง •̀_•́)ง Generating Image");
+
             return html;
         }
 
@@ -330,14 +325,11 @@ namespace Meiyounaise.Modules
 
                 throw new Exception(
                     $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
-
             }
 
             if (!albums.Content.Any())
-            {
                 throw new Exception($"User `{username}` didn't listen to any albums yet!");
-            }
-
+            
             try
             {
                 File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",
@@ -375,8 +367,7 @@ namespace Meiyounaise.Modules
             string username = "")
         {
             var thisChart = GenerateChart(ctx);
-            
-            var msg = await ctx.RespondAsync("This will probably take while (thank you last.fm api very cool)");
+
             await ctx.TriggerTypingAsync();
 
             var user = Users.GetUser(ctx.User);
@@ -409,7 +400,7 @@ namespace Meiyounaise.Modules
 
             try
             {
-                var html = GenerateHtml(artists, HtmlTemplate, option, msg);
+                var html = await GenerateHtml(artists, HtmlTemplate, option);
                 File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",
                     html);
             }
@@ -424,7 +415,6 @@ namespace Meiyounaise.Modules
             await ctx.Channel.SendFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
                 $"Requested by: {thisChart.User}");
             DeleteCharts(thisChart.Id);
-            await msg.DeleteAsync();
         }
 
         [Command("songchart")]
@@ -450,7 +440,7 @@ namespace Meiyounaise.Modules
                     $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
             }
 
-            var name =  user?.Last ?? username;
+            var name = user?.Last ?? username;
 
             SongResponse songs;
             try
@@ -468,7 +458,9 @@ namespace Meiyounaise.Modules
                 {
                     throw new Exception("last.fm's response was not successful, try again later!");
                 }
-                throw new Exception($"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+
+                throw new Exception(
+                    $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
 
             if (songs.Toptracks.Track.Count == 0)
@@ -530,34 +522,33 @@ namespace Meiyounaise.Modules
             return JsonConvert.DeserializeObject<SongResponse>(json);
         }
 
-        private static string ScrapeImage(LastArtist artist)
+        private static async Task<KeyValuePair<LastArtist, string>[]> CollectArtists(IEnumerable<LastArtist> artists)
         {
-            var req = (HttpWebRequest) WebRequest.Create(artist.Url);
-            var response = (HttpWebResponse) req.GetResponse();
-            string result;
-            if (response.StatusCode != HttpStatusCode.OK)
-                return "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
-            var receiveStream = response.GetResponseStream();
+            var tasks = artists.Select(ScrapeImageAsync);
+            return await Task.WhenAll(tasks);
+        }
 
-            var readStream = response.CharacterSet == null
-                ? new StreamReader(receiveStream ?? throw new Exception())
-                : new StreamReader(receiveStream ?? throw new Exception(), Encoding.GetEncoding(response.CharacterSet));
-            var data = readStream.ReadToEnd();
-            response.Close();
-            readStream.Close();
-            try
+        private static async Task<KeyValuePair<LastArtist, string>> ScrapeImageAsync(LastArtist artist)
+        {
+            using (var client = new HttpClient())
             {
-                result = data.Substring(
-                    data.IndexOf("<meta property=\"og:image\"           content=\"", StringComparison.Ordinal) + 45,
-                    150);
-                result = result.Remove(result.IndexOf("\"", StringComparison.Ordinal));
-            }
-            catch (Exception)
-            {
-                result = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
-            }
+                var response = await client.GetAsync(artist.Url).ConfigureAwait(false);
+                var result = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    result = result.Substring(
+                        result.IndexOf("<meta property=\"og:image\"           content=\"", StringComparison.Ordinal) +
+                        45,
+                        150);
+                    result = result.Remove(result.IndexOf("\"", StringComparison.Ordinal));
+                }
+                catch (Exception)
+                {
+                    result = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
+                }
 
-            return result;
+                return new KeyValuePair<LastArtist, string>(artist, result);
+            }
         }
 
         private static string CalcHeight(int amount)
