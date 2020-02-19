@@ -378,7 +378,7 @@ namespace Meiyounaise.Modules
             }
 
             //If a name was provided, generate a chart for that user
-            var name = user?.Last ?? username;
+            var name = username == "" ? user?.Last : username;
 
             //Get the top 25 artists on last.fm
             var artists = await Client.User.GetTopArtists(name, (LastStatsTimeSpan) ConvertTimeSpan(timespan), 1, 25);
@@ -440,7 +440,7 @@ namespace Meiyounaise.Modules
                     $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
             }
 
-            var name = user?.Last ?? username;
+            var name = username == "" ? user?.Last : username;
 
             SongResponse songs;
             try
