@@ -170,7 +170,7 @@ namespace Meiyounaise.Modules
         {
             if (level != Bot.MarkovModel.Level)
                 Bot.MarkovModel.Retrain(level);
-            Bot.MarkovModel.Learn(lines, false);
+            Bot.MarkovModel.Learn(lines);
             return Bot.MarkovModel.Walk().First();
         }
 

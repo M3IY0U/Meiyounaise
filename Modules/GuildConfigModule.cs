@@ -167,52 +167,6 @@ namespace Meiyounaise.Modules
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
 
-        [Command("bridgechannel"),
-         Description("Sets the channel where the bot will post messages that have enough reactions.")]
-        [RequireUserPermissions(Permissions.Administrator)]
-        public async Task SetBridgeChannel(CommandContext ctx,
-            [Description("A mention of the new bridge channel or 'disable' to disable it.")]
-            string chn = "")
-        {
-            switch (chn)
-            {
-                case "disable":
-                    chn = "0";
-
-                    break;
-                case "":
-                    await ctx.RespondAsync(Guilds.GetGuild(ctx.Guild).BridgeChannel == 0
-                        ? "Currently there is no board channel specified."
-                        : $"The current board channel is: {ctx.Guild.GetChannel(Guilds.GetGuild(ctx.Guild).BridgeChannel).Mention}");
-                    return;
-                default:
-                {
-                    if (ctx.Message.MentionedChannels.Count == 0)
-                    {
-                        await ctx.RespondAsync("I need a mention (#channelname) of the channel you want to use!");
-                        return;
-                    }
-
-                    chn = ctx.Message.MentionedChannels.First().Id.ToString();
-                    break;
-                }
-            }
-
-            Utilities.Con.Open();
-            using (var cmd =
-                new SqliteCommand("UPDATE Guilds SET bridgeChannel = @channel WHERE Guilds.id = @id",
-                    Utilities.Con))
-            {
-                cmd.Parameters.AddWithValue("@channel", chn);
-                cmd.Parameters.AddWithValue("@id", ctx.Guild.Id);
-                cmd.ExecuteReader();
-            }
-
-            Utilities.Con.Close();
-            Guilds.UpdateGuild(ctx.Guild);
-            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
-        }
-        
         [Command("leavemsg"), Description("Sets the message that the bot will post if someone leaves the guild.")]
         [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetLeaveMsg(CommandContext ctx,

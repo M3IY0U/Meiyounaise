@@ -51,7 +51,6 @@ namespace Meiyounaise
             _cnext.CommandErrored += DB.EventHandlers.CommandErrored;
 
             Client.Ready += DB.EventHandlers.Ready;
-            Client.MessageCreated += DB.Bridge.Message;
             Client.GuildCreated += DB.EventHandlers.GuildCreated;
             Client.GuildMemberAdded += DB.EventHandlers.UserJoined;
             Client.MessageCreated += DB.EventHandlers.MessageCreated;

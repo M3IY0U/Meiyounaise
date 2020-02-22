@@ -139,6 +139,21 @@ namespace Meiyounaise.Modules
             await ctx.Client.GetInteractivity().SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
         }
 
+        [Command("related"), Aliases("similar")]
+        public async Task Test(CommandContext ctx, [RemainingText]string input)
+        {
+            _spotify = AuthSpotify();
+            var search = await _spotify.SearchItemsAsync(input, SearchType.Artist);
+            var severalArtists = await _spotify.GetRelatedArtistsAsync(search.Artists.Items.First().Id);
+            var result = search.Artists.Items.First();
+            var eb = new DiscordEmbedBuilder()
+                .WithAuthor($"Similar artists to {result.Name}", result.ExternalUrls.First().Value, result.Images.First().Url)
+                .WithFooter("Based on Spotify")
+                .WithColor(new DiscordColor(29, 185, 84))
+                .WithDescription(severalArtists.Artists.Aggregate("", (current, artist) => current + $"[{artist.Name}]({artist.ExternalUrls.First().Value})\n"));
+            await ctx.RespondAsync(embed:eb.Build());
+        }
+
         [Command("artist")]
         public async Task SearchArtist(CommandContext ctx, [RemainingText] string input)
         {
