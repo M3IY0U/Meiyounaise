@@ -19,7 +19,6 @@
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.0.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.0.0" />
       <PackageReference Include="Microsoft.Data.Sqlite" Version="3.0.0" />
-      <PackageReference Include="OsuSharp" Version="3.2.8" />
       <PackageReference Include="SpotifyAPI-NET" Version="2.19.0" />
     </ItemGroup>
 

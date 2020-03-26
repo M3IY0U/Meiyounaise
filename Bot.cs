@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,9 +7,6 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using MarkovSharp.TokenisationStrategies;
-using Meiyounaise.Modules;
-using OsuSharp.Endpoints;
-using Timer = System.Timers.Timer;
 
 namespace Meiyounaise
 {
@@ -21,7 +17,6 @@ namespace Meiyounaise
         public static InteractivityExtension Interactivity;
         private CancellationTokenSource _cts;
         public static StringMarkov MarkovModel;
-        public static Dictionary<string, List<UserBest>> OsuTops = new Dictionary<string, List<UserBest>>();
 
         public Bot()
         {
@@ -57,16 +52,9 @@ namespace Meiyounaise
             Client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
             Client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
             Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
-            OsuModule.UpdateTopPlays();
+            
             MarkovModel = new StringMarkov(1);
-            var osuTimer = new Timer
-            {
-                Interval = 120000,
-                AutoReset = true,
-                Enabled = true
-            }; 
-            GC.KeepAlive(osuTimer);
-            osuTimer.Elapsed += OsuModule.OsuTimerElapsed;
+            
             Console.WriteLine("Timer started!");
         }
 
