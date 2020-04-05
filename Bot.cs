@@ -16,7 +16,6 @@ namespace Meiyounaise
         private CommandsNextExtension _cnext;
         public static InteractivityExtension Interactivity;
         private CancellationTokenSource _cts;
-        public static StringMarkov MarkovModel;
 
         public Bot()
         {
@@ -52,10 +51,6 @@ namespace Meiyounaise
             Client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
             Client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
             Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
-            
-            MarkovModel = new StringMarkov(1);
-            
-            Console.WriteLine("Timer started!");
         }
 
         private static Task<int> CustomPrefixPredicate(DiscordMessage msg)

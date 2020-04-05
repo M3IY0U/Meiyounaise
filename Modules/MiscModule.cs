@@ -8,6 +8,7 @@ using CoolAsciiFaces;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using MarkovSharp.TokenisationStrategies;
 using Meiyounaise.DB;
 
 namespace Meiyounaise.Modules
@@ -168,10 +169,9 @@ namespace Meiyounaise.Modules
 
         private static string MarkovResponse(int level, IEnumerable<string> lines)
         {
-            if (level != Bot.MarkovModel.Level)
-                Bot.MarkovModel.Retrain(level);
-            Bot.MarkovModel.Learn(lines);
-            return Bot.MarkovModel.Walk().First();
+            var model = new StringMarkov(level);
+            model.Learn(lines);
+            return model.Walk().First();
         }
 
         [Command("mock"), Aliases("spott")]
