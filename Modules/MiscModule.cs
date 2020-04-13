@@ -171,7 +171,7 @@ namespace Meiyounaise.Modules
         {
             var model = new StringMarkov(level);
             model.Learn(lines);
-            return model.Walk().First();
+            return model.RebuildPhrase(model.Walk());
         }
 
         [Command("mock"), Aliases("spott")]

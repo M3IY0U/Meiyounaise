@@ -6,7 +6,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
-using MarkovSharp.TokenisationStrategies;
 
 namespace Meiyounaise
 {
@@ -14,7 +13,6 @@ namespace Meiyounaise
     {
         public static DiscordClient Client;
         private CommandsNextExtension _cnext;
-        public static InteractivityExtension Interactivity;
         private CancellationTokenSource _cts;
 
         public Bot()
@@ -28,7 +26,7 @@ namespace Meiyounaise
                 UseInternalLogHandler = true
             });
 
-            Interactivity = Client.UseInteractivity(new InteractivityConfiguration());
+            Client.UseInteractivity(new InteractivityConfiguration());
 
             _cts = new CancellationTokenSource();
 
