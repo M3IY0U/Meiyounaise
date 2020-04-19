@@ -132,7 +132,7 @@ namespace Meiyounaise.Modules
         public async Task FmRecent(CommandContext ctx,
             [Description("The user you want to see the most recent tracks of. Leave empty for own account.")]
             string username = "",
-            [Description("How many recent tracks should be shown, maximum is 25, defaults to 5.")]
+            [Description("How many recent tracks should be shown, maximum is 10, defaults to 5.")]
             int count = 5)
         {
             if (username == "")
@@ -155,7 +155,7 @@ namespace Meiyounaise.Modules
                 throw new Exception(
                     $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
-
+            
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor($"{username}'s most recent scrobbles", $"https://www.last.fm/user/{username}",
                     "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
@@ -164,11 +164,12 @@ namespace Meiyounaise.Modules
                 .WithThumbnailUrl(response.Content.First().Images.Large != null
                     ? response.Content.First().Images.Large.AbsoluteUri
                     : "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904");
-            if (count > 25)
-                count = 25;
+            if (count > 10)
+                count = 10;
             foreach (var track in response.Content.Take(count))
             {
-                eb.AddField($"{track.TimePlayed.Humanize()}", string.Concat(
+                var ago = track.TimePlayed.Humanize();
+                eb.AddField(ago == "never" ? "Currently scrobbling" : ago, string.Concat(
                     $"[{track.ArtistName}](https://www.last.fm/music/{track.ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
                     " - ",
                     $"[{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})"));
