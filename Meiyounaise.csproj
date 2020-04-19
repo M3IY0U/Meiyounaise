@@ -7,10 +7,11 @@
 
     <ItemGroup>
       <PackageReference Include="CoolAsciiFaces.dll" Version="1.0.0" />
-      <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00682" />
-      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00682" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00682" />
+      <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00684" />
+      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00684" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00684" />
       <PackageReference Include="GoogleTranslateFreeApi" Version="1.1.1" />
+      <PackageReference Include="Humanizer" Version="2.8.2" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.1.0.339" />
       <PackageReference Include="log4net" Version="2.0.8" />
       <PackageReference Include="MarkovSharp" Version="4.0.32" />

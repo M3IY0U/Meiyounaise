@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Humanizer;
 using IF.Lastfm.Core.Api;
 using IF.Lastfm.Core.Api.Enums;
 using IF.Lastfm.Core.Objects;
@@ -127,170 +128,53 @@ namespace Meiyounaise.Modules
             await ctx.RespondAsync(embed: embed.Build());
         }
 
-        [GroupCommand, Priority(1)]
-        public async Task FmUser(CommandContext ctx, DiscordUser user)
+        [Command("recent"), Aliases("rs")]
+        public async Task FmRecent(CommandContext ctx,
+            [Description("The user you want to see the most recent tracks of. Leave empty for own account.")]
+            string username = "",
+            [Description("How many recent tracks should be shown, maximum is 25, defaults to 5.")]
+            int count = 5)
         {
-            try
+            if (username == "")
             {
-                await Fm(ctx, Utilities.ResolveName("last", user));
-            }
-            catch (Exception e)
-            {
-                if (!e.Message.Contains("No username set for the requested service!") &&
-                    !e.Message.Contains("Username could not be resolved"))
+                if (username == "#" || Users.UserList.All(x => x.Id != ctx.User.Id))
                 {
-                    await Fm(ctx, user.Username);
-                }
-
-                throw new Exception("This user has not set their last.fm account yet!");
-            }
-        }
-
-        private static string GenerateHtml(IEnumerable<LastAlbum> albums, string html, string option)
-        {
-            var counter = 0;
-            var playCount = "";
-            foreach (var album in albums)
-            {
-                switch (option.ToLower())
-                {
-                    case "all":
-                        if (album.PlayCount.HasValue)
-                            playCount = album.PlayCount.Value + " Plays";
-                        html += album.Images.Large != null
-                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-                        break;
-                    case "names":
-                        html += album.Images.Large != null
-                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>";
-                        break;
-                    case "blank":
-                        html += album.Images.Large != null
-                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"></div>"
-                            : "<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"></div>";
-                        break;
-                    case "plays":
-                        if (album.PlayCount.HasValue)
-                            playCount = album.PlayCount.Value + " Plays";
-                        html += album.Images.Large != null
-                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-                        break;
-                    default:
-                        throw new Exception($"`{option}` is not a valid option");
-                }
-
-                if (++counter % 5 != 0) continue;
-                html += "<br>";
-                counter = 0;
-            }
-
-            return html;
-        }
-
-        private static async Task<string> GenerateHtml(IEnumerable<LastArtist> artists, string html, string option)
-        {
-            var counter = 0;
-            var playCount = "";
-            var lastArtists = await CollectArtists(artists);
-            foreach (var (artist, imageUrl) in lastArtists)
-            {
-                switch (option.ToLower())
-                {
-                    case "all":
-                        if (artist.PlayCount.HasValue)
-                            playCount = artist.PlayCount.Value + " Plays";
-                        html +=
-                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-                        break;
-                    case "names":
-                        html +=
-                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p></div>";
-                        break;
-                    case "blank":
-                        html +=
-                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"></div>";
-                        break;
-                    case "plays":
-                        if (artist.PlayCount.HasValue)
-                            playCount = artist.PlayCount.Value + " Plays";
-                        html +=
-                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-                        break;
-                    default:
-                        throw new Exception($"`{option}` is not a valid option");
-                }
-
-                if (++counter % 5 != 0) continue;
-                html += "<br>";
-                counter = 0;
-            }
-
-            return html;
-        }
-
-        private static string GenerateHtml(IEnumerable<Track> tracks, string html)
-        {
-            var playCount = "";
-            var enumerable = tracks.ToList();
-            var maxPlayCount = enumerable.First().PlayCount;
-            foreach (var track in enumerable)
-            {
-                if (track.PlayCount != 0)
-                    playCount = track.PlayCount + " Plays";
-                html +=
-                    $"<div class=\"skillBox\"> <p>{track.Name} <i>by {track.Artist.Name}</i></p><p>{playCount}</p><div class=\"skill\"> <div class=\"skill_level\" style=\"width: {99 * track.PlayCount / maxPlayCount + 1}%\"></div></div></div>";
-            }
-
-            return html + "</div></body></html>";
-        }
-
-        private static int ConvertTimeSpan(string timespan)
-        {
-            switch (timespan.ToLower())
-            {
-                case "":
-                case "overall":
-                    return 0;
-                case "week":
-                    return 1;
-                case "month":
-                    return 2;
-                case "quarter":
-                    return 3;
-                case "half":
-                    return 4;
-                case "year":
-                    return 5;
-                default:
                     throw new Exception(
-                        "Couldn't convert timespan! Try using `help fm [artist/album]chart` to get more info.");
-            }
-        }
+                        "I don't have a last.fm name linked to your discord account. Set it using `fm set [Name]`.");
+                }
 
-        private static Task GenerateImage(string width, string height, Chart chart)
-        {
-            using (var exeProcess = Process.Start(new ProcessStartInfo
-            {
-                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "wkhtmltoimage.exe" : "wkhtmltoimage",
-                Arguments =
-                    $"{width} {height} {Utilities.DataPath}{chart.Id}.html {Utilities.DataPath}{chart.Id}.png",
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            }))
-            {
-                exeProcess?.WaitForExit();
+                username = Users.GetUser(ctx.User).Last;
             }
 
-            return Task.CompletedTask;
-        }
+            var response = await Client.User.GetRecentScrobbles(username);
+            if (!response.Success)
+            {
+                if (username == "")
+                    throw new Exception("last.fm's response was not successful, try again later!");
 
-        private static void DeleteCharts(string guid)
-        {
-            File.Delete(Utilities.DataPath + $"{guid}.png");
-            File.Delete(Utilities.DataPath + $"{guid}.html");
+                throw new Exception(
+                    $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+            }
+
+            var eb = new DiscordEmbedBuilder()
+                .WithAuthor($"{username}'s most recent scrobbles", $"https://www.last.fm/user/{username}",
+                    "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
+                .WithColor(DiscordColor.Red)
+                .WithTimestamp(DateTime.Now)
+                .WithThumbnailUrl(response.Content.First().Images.Large != null
+                    ? response.Content.First().Images.Large.AbsoluteUri
+                    : "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904");
+            if (count > 25)
+                count = 25;
+            foreach (var track in response.Content.Take(count))
+            {
+                eb.AddField($"{track.TimePlayed.Humanize()}", string.Concat(
+                    $"[{track.ArtistName}](https://www.last.fm/music/{track.ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
+                    " - ",
+                    $"[{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})"));
+            }
+
+            await ctx.RespondAsync(embed: eb.Build());
         }
 
         [Command("albumchart")]
@@ -329,7 +213,7 @@ namespace Meiyounaise.Modules
 
             if (!albums.Content.Any())
                 throw new Exception($"User `{username}` didn't listen to any albums yet!");
-            
+
             try
             {
                 File.WriteAllText($"{Utilities.DataPath}{thisChart.Id}.html",
@@ -487,6 +371,153 @@ namespace Meiyounaise.Modules
             DeleteCharts(thisChart.Id);
         }
 
+        private static string GenerateHtml(IEnumerable<LastAlbum> albums, string html, string option)
+        {
+            var counter = 0;
+            var playCount = "";
+            foreach (var album in albums)
+            {
+                switch (option.ToLower())
+                {
+                    case "all":
+                        if (album.PlayCount.HasValue)
+                            playCount = album.PlayCount.Value + " Plays";
+                        html += album.Images.Large != null
+                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                        break;
+                    case "names":
+                        html += album.Images.Large != null
+                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>";
+                        break;
+                    case "blank":
+                        html += album.Images.Large != null
+                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"></div>"
+                            : "<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"></div>";
+                        break;
+                    case "plays":
+                        if (album.PlayCount.HasValue)
+                            playCount = album.PlayCount.Value + " Plays";
+                        html += album.Images.Large != null
+                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                        break;
+                    default:
+                        throw new Exception($"`{option}` is not a valid option");
+                }
+
+                if (++counter % 5 != 0) continue;
+                html += "<br>";
+                counter = 0;
+            }
+
+            return html;
+        }
+
+        private static async Task<string> GenerateHtml(IEnumerable<LastArtist> artists, string html, string option)
+        {
+            var counter = 0;
+            var playCount = "";
+            var lastArtists = await CollectArtists(artists);
+            foreach (var (artist, imageUrl) in lastArtists)
+            {
+                switch (option.ToLower())
+                {
+                    case "all":
+                        if (artist.PlayCount.HasValue)
+                            playCount = artist.PlayCount.Value + " Plays";
+                        html +=
+                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                        break;
+                    case "names":
+                        html +=
+                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p></div>";
+                        break;
+                    case "blank":
+                        html +=
+                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"></div>";
+                        break;
+                    case "plays":
+                        if (artist.PlayCount.HasValue)
+                            playCount = artist.PlayCount.Value + " Plays";
+                        html +=
+                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                        break;
+                    default:
+                        throw new Exception($"`{option}` is not a valid option");
+                }
+
+                if (++counter % 5 != 0) continue;
+                html += "<br>";
+                counter = 0;
+            }
+
+            return html;
+        }
+
+        private static string GenerateHtml(IEnumerable<Track> tracks, string html)
+        {
+            var playCount = "";
+            var enumerable = tracks.ToList();
+            var maxPlayCount = enumerable.First().PlayCount;
+            foreach (var track in enumerable)
+            {
+                if (track.PlayCount != 0)
+                    playCount = track.PlayCount + " Plays";
+                html +=
+                    $"<div class=\"skillBox\"> <p>{track.Name} <i>by {track.Artist.Name}</i></p><p>{playCount}</p><div class=\"skill\"> <div class=\"skill_level\" style=\"width: {99 * track.PlayCount / maxPlayCount + 1}%\"></div></div></div>";
+            }
+
+            return html + "</div></body></html>";
+        }
+
+        private static int ConvertTimeSpan(string timespan)
+        {
+            switch (timespan.ToLower())
+            {
+                case "":
+                case "overall":
+                    return 0;
+                case "week":
+                    return 1;
+                case "month":
+                    return 2;
+                case "quarter":
+                    return 3;
+                case "half":
+                    return 4;
+                case "year":
+                    return 5;
+                default:
+                    throw new Exception(
+                        "Couldn't convert timespan! Try using `help fm [artist/album]chart` to get more info.");
+            }
+        }
+
+        private static Task GenerateImage(string width, string height, Chart chart)
+        {
+            using (var exeProcess = Process.Start(new ProcessStartInfo
+            {
+                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "wkhtmltoimage.exe" : "wkhtmltoimage",
+                Arguments =
+                    $"{width} {height} {Utilities.DataPath}{chart.Id}.html {Utilities.DataPath}{chart.Id}.png",
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            }))
+            {
+                exeProcess?.WaitForExit();
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static void DeleteCharts(string guid)
+        {
+            File.Delete(Utilities.DataPath + $"{guid}.png");
+            File.Delete(Utilities.DataPath + $"{guid}.html");
+        }
+
         private static async Task<SongResponse> GetTopTracks(string timespan, string user)
         {
             switch (timespan.ToLower())
@@ -564,6 +595,38 @@ namespace Meiyounaise.Modules
 
         #region Overloads
 
+        [GroupCommand, Priority(1)]
+        public async Task FmUser(CommandContext ctx, DiscordUser user)
+        {
+            try
+            {
+                await Fm(ctx, Utilities.ResolveName("last", user));
+            }
+            catch (Exception e)
+            {
+                if (e.Message.Contains("No username set for the requested service!") ||
+                    e.Message.Contains("Username could not be resolved"))
+                    throw new Exception("This user has not set their last.fm account yet!");
+                await Fm(ctx, user.Username);
+            }
+        }
+
+        [Command("recent"), Priority(1)]
+        public async Task FmRecentUser(CommandContext ctx, DiscordUser user = null, int count = 5)
+        {
+            if (user == null)
+                user = ctx.User;
+            try
+            {
+                var name = Utilities.ResolveName("last", user);
+                await FmRecent(ctx, name, count);
+            }
+            catch (Exception)
+            {
+                await FmRecent(ctx, user.Username, count);
+            }
+        }
+
         [Command("songchart"), Priority(1)]
         [Description("Returns an image of your top songs scrobbled on last.fm.")]
         public async Task GenerateSongChart(CommandContext ctx,
@@ -573,9 +636,7 @@ namespace Meiyounaise.Modules
             DiscordUser user = null)
         {
             if (user == null)
-            {
                 user = ctx.User;
-            }
 
             try
             {
@@ -598,9 +659,7 @@ namespace Meiyounaise.Modules
             DiscordUser user = null)
         {
             if (user == null)
-            {
                 user = ctx.User;
-            }
 
             try
             {
@@ -622,9 +681,7 @@ namespace Meiyounaise.Modules
             DiscordUser user = null)
         {
             if (user == null)
-            {
                 user = ctx.User;
-            }
 
             try
             {
