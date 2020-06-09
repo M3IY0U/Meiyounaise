@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
@@ -85,57 +86,7 @@ namespace Meiyounaise.Modules
         {
             if (langcode == "codes")
             {
-                var embed = new DiscordEmbedBuilder();
-                var embed2 = new DiscordEmbedBuilder();
-                var embed3 = new DiscordEmbedBuilder();
-                var embed4 = new DiscordEmbedBuilder();
-                var embed5 = new DiscordEmbedBuilder();
-                //var client = TranslationClient.Create(Credential);
-                int i = 0;
-                foreach (var language in GoogleTranslator.LanguagesSupported)
-                {
-                    if (i < 25)
-                    {
-                        embed.AddField(language.FullName, language.ISO639, true);
-                        i++;
-                    }
-                    else if (i < 50)
-                    {
-                        embed2.AddField(language.FullName, language.ISO639, true);
-                        i++;
-                    }
-                    else if (i < 75)
-                    {
-                        embed3.AddField(language.FullName, language.ISO639, true);
-                        i++;
-                    }
-                    else if (i < 100)
-                    {
-                        embed4.AddField(language.FullName, language.ISO639, true);
-                        i++;
-                    }
-                    else if (i < 125)
-                    {
-                        embed5.AddField(language.FullName, language.ISO639, true);
-                        i++;
-                    }
-                }
-
-                try
-                {
-                    var dm = await ctx.Member.CreateDmChannelAsync();
-                    await dm.SendMessageAsync("", false, embed.Build());
-                    await dm.SendMessageAsync("", false, embed2.Build());
-                    await dm.SendMessageAsync("", false, embed3.Build());
-                    await dm.SendMessageAsync("", false, embed4.Build());
-                    await dm.SendMessageAsync("", false, embed5.Build());
-                    await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("✅"));
-                }
-                catch (Exception e)
-                {
-                    await ctx.RespondAsync(e.Message);
-                }
-
+                await SendLanguageCodes(ctx);
                 return;
             }
 
@@ -154,6 +105,40 @@ namespace Meiyounaise.Modules
             }
         }
 
+        private static async Task SendLanguageCodes(CommandContext ctx)
+        {
+            var embeds = new List<DiscordEmbed>();
+            var embed = new DiscordEmbedBuilder();
+            var i = 0;
+
+            foreach (var language in GoogleTranslator.LanguagesSupported)
+            {
+                if (++i >= 25)
+                {
+                    embeds.Add(embed.Build());
+                    embed = new DiscordEmbedBuilder();
+                    i = 0;
+                }
+
+                i++;
+                embed.AddField(language.FullName, language.ISO639, true);
+            }
+
+            try
+            {
+                var dm = await ctx.Member.CreateDmChannelAsync();
+                    
+                foreach (var embedToSend in embeds)
+                    await dm.SendMessageAsync("", false, embedToSend);
+                    
+                await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("✅"));
+            }
+            catch (Exception e)
+            {
+                await ctx.RespondAsync(e.Message);
+            }
+        }
+        
         private static async Task<string> GTranslate(string text, string lang)
         {
             var client = new GoogleTranslator();
@@ -165,7 +150,9 @@ namespace Meiyounaise.Modules
             }
             catch (Exception)
             {
-                throw new Exception("Translating failed!\n[» View on Google Translate]"+ $"(https://translate.google.com/#view=home&op=translate&sl=auto&tl={lang}&text={text})".Replace(" ","%20"));
+                throw new Exception("Translating failed!\n[» View on Google Translate]" +
+                                    $"(https://translate.google.com/#view=home&op=translate&sl=auto&tl={lang}&text={text})"
+                                        .Replace(" ", "%20"));
             }
         }
     }
