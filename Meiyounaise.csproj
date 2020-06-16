@@ -20,6 +20,7 @@
       <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.0.0" />
       <PackageReference Include="Microsoft.Data.Sqlite" Version="3.0.0" />
       <PackageReference Include="SpotifyAPI-NET" Version="2.19.0" />
+      <PackageReference Include="WanaKana-net" Version="1.0.0" />
     </ItemGroup>
 
 </Project>

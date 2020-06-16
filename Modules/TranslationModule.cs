@@ -7,6 +7,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using GoogleTranslateFreeApi;
 using Meiyounaise.DB;
+using WanaKanaNet;
 
 namespace Meiyounaise.Modules
 {
@@ -17,20 +18,9 @@ namespace Meiyounaise.Modules
         [Description("Translates your message to german.")]
         public async Task German(CommandContext ctx, [RemainingText] string text)
         {
-            if (string.IsNullOrEmpty(text))
-            {
-                await LastGerman(ctx);
-                return;
-            }
+            text = await CheckInput(text, ctx);
 
             var translation = await GTranslate(text, Language.German.ISO639);
-            await ctx.RespondAsync(translation);
-        }
-
-        private static async Task LastGerman(CommandContext ctx)
-        {
-            var message = await ctx.Channel.GetMessagesAsync(2);
-            var translation = await GTranslate(message.Last().Content, Language.German.ISO639);
             await ctx.RespondAsync(translation);
         }
 
@@ -39,20 +29,9 @@ namespace Meiyounaise.Modules
         [Description("Translates your message to english.")]
         public async Task English(CommandContext ctx, [RemainingText] string text)
         {
-            if (string.IsNullOrEmpty(text))
-            {
-                await LastEnglish(ctx);
-                return;
-            }
+            text = await CheckInput(text, ctx);
 
             var translation = await GTranslate(text, Language.English.ISO639);
-            await ctx.RespondAsync(translation);
-        }
-
-        private static async Task LastEnglish(CommandContext ctx)
-        {
-            var message = await ctx.Channel.GetMessagesAsync(2);
-            var translation = await GTranslate(message.Last().Content, Language.English.ISO639);
             await ctx.RespondAsync(translation);
         }
 
@@ -62,11 +41,13 @@ namespace Meiyounaise.Modules
             "Translates your text into the desired language. If you enter \"codes\" instead of a code the bot will dm you all available codes.")]
         public async Task Translate(CommandContext ctx, string langcode, [RemainingText] string text)
         {
-            if (string.IsNullOrEmpty(text))
+            if (langcode == "codes")
             {
-                await LastTranslate(ctx, langcode);
+                await SendLanguageCodes(ctx);
                 return;
             }
+            
+            text = await CheckInput(text, ctx);
 
             try
             {
@@ -81,28 +62,36 @@ namespace Meiyounaise.Modules
                                     $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
             }
         }
-
-        private static async Task LastTranslate(CommandContext ctx, string langcode)
+        
+        [Command("romaji")]
+        [Description("Converts japanese characters to romaji.")]
+        public async Task ToRomanji(CommandContext ctx, [RemainingText] string text = "")
         {
-            if (langcode == "codes")
-            {
-                await SendLanguageCodes(ctx);
-                return;
-            }
+            text = await CheckInput(text, ctx);
+            await ctx.RespondAsync(WanaKana.ToRomaji(text));
+        }
 
-            var message = await ctx.Channel.GetMessagesAsync(2);
-            try
-            {
-                var translation = await GTranslate(message.Last().Content, langcode);
-                await ctx.RespondAsync(translation);
-            }
-            catch (Exception e)
-            {
-                if (e.Message.Contains("Translating failed!"))
-                    throw;
-                throw new Exception("Couldn't translate, probably because you used the wrong language code.\n" +
-                                    $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
-            }
+        [Command("hiragana"), Aliases("hira")]
+        [Description("Converts *doesn't translate* text to hiragana.")]
+        public async Task ToHiragana(CommandContext ctx, [RemainingText] string text)
+        {
+            text = await CheckInput(text, ctx);
+            await ctx.RespondAsync(WanaKana.ToHiragana(text));
+        }
+
+        [Command("katakana"), Aliases("kata")]
+        [Description("Converts *doesn't translate* text to katakana.")]
+        public async Task ToKatakana(CommandContext ctx, [RemainingText] string text)
+        {
+            text = await CheckInput(text, ctx);
+            await ctx.RespondAsync(WanaKana.ToKatakana(text));
+        }
+
+        private static async Task<string> CheckInput(string input, CommandContext ctx)
+        {
+            if (!string.IsNullOrEmpty(input)) return input;
+            var messages = await ctx.Channel.GetMessagesAsync(2);
+            return messages.Last().Content;
         }
 
         private static async Task SendLanguageCodes(CommandContext ctx)
@@ -127,10 +116,10 @@ namespace Meiyounaise.Modules
             try
             {
                 var dm = await ctx.Member.CreateDmChannelAsync();
-                    
+
                 foreach (var embedToSend in embeds)
                     await dm.SendMessageAsync("", false, embedToSend);
-                    
+
                 await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("✅"));
             }
             catch (Exception e)
@@ -138,7 +127,7 @@ namespace Meiyounaise.Modules
                 await ctx.RespondAsync(e.Message);
             }
         }
-        
+
         private static async Task<string> GTranslate(string text, string lang)
         {
             var client = new GoogleTranslator();
