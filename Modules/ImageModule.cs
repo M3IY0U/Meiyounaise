@@ -71,7 +71,7 @@ namespace Meiyounaise.Modules
             var eb = new DiscordEmbedBuilder()
                 .WithColor(new DiscordColor(responseObject.Color.AccentColor))
                 .WithTitle("Image Analysis")
-                .WithThumbnailUrl(imageUrl)
+                .WithThumbnail(imageUrl)
                 .WithDescription(captions)
                 .AddField("Categories",categories,true)
                 .AddField("Tags", tags, true)

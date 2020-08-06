@@ -132,7 +132,7 @@ namespace Meiyounaise.Modules
             var result = await _spotify.SearchItemsAsync(artist, SearchType.Artist);
             var pages = result.Artists.Items.Select(a => new DiscordEmbedBuilder().WithColor(new DiscordColor("#1DB954"))
                     .WithAuthor(a.Name, a.ExternalUrls.First().Value)
-                    .WithThumbnailUrl(a.Images.First().Url)
+                    .WithThumbnail(a.Images.First().Url)
                     .WithDescription(string.Join(", ", a.Genres)))
                 .Select(eb => new Page(embed: eb))
                 .ToList();

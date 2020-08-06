@@ -286,7 +286,7 @@ namespace Meiyounaise.DB
         {
             var builder = new DiscordEmbedBuilder().AddField("Author", msg.Author.Mention, true)
                 .AddField("Channel", msg.Channel.Mention, true)
-                .WithThumbnailUrl(msg.Author.AvatarUrl)
+                .WithThumbnail(msg.Author.AvatarUrl)
                 .WithTimestamp(msg.Timestamp)
                 .WithColor(new DiscordColor("420DAB"));
             //This is needed so that the bot doesn't shit itself if the message was just a picture

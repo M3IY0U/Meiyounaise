@@ -33,6 +33,8 @@ namespace Meiyounaise.Modules
         private static readonly LastfmClient Client = new LastfmClient(Utilities.GetKey("lastkey"),
             Utilities.GetKey("lastsecret"), new HttpClient());
 
+        #region Commands
+
         [Command("set")]
         [Description("Set your last.fm username.")]
         public async Task FmSet(CommandContext ctx, string username = "")
@@ -118,9 +120,9 @@ namespace Meiyounaise.Modules
                     " - ",
                     $"[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})"))
                 .WithFooter($"{info.Content.Playcount} total scrobbles on last.fm")
-                .WithThumbnailUrl(response.Content.First().Images.Large != null
+                .WithThumbnail(response.Content.First().Images.Large != null
                     ? response.Content.First().Images.Large.AbsoluteUri
-                    : "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904")
+                    : "https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb")
                 .AddField("Album",
                     response.Content.First().AlbumName != ""
                         ? $"[{response.Content.First().AlbumName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().AlbumName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})"
@@ -155,15 +157,15 @@ namespace Meiyounaise.Modules
                 throw new Exception(
                     $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
-            
+
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor($"{username}'s most recent scrobbles", $"https://www.last.fm/user/{username}",
                     "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
                 .WithColor(DiscordColor.Red)
                 .WithTimestamp(DateTime.Now)
-                .WithThumbnailUrl(response.Content.First().Images.Large != null
+                .WithThumbnail(response.Content.First().Images.Large != null
                     ? response.Content.First().Images.Large.AbsoluteUri
-                    : "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904");
+                    : "https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb");
             if (count > 10)
                 count = 10;
             foreach (var track in response.Content.Take(count))
@@ -233,14 +235,6 @@ namespace Meiyounaise.Modules
             DeleteCharts(thisChart.Id);
         }
 
-        private static Chart GenerateChart(CommandContext ctx)
-        {
-            return new Chart
-            {
-                Id = Guid.NewGuid().ToString(),
-                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
-            };
-        }
 
         [Command("artistchart")]
         [Description("Returns an image of your top artists scrobbled on last.fm.")]
@@ -282,7 +276,6 @@ namespace Meiyounaise.Modules
             {
                 throw new Exception($"User `{username}` didn't listen to any artists yet!");
             }
-
             try
             {
                 var html = await GenerateHtml(artists, HtmlTemplate, option);
@@ -371,6 +364,18 @@ namespace Meiyounaise.Modules
                 $"Requested by: {thisChart.User}");
             DeleteCharts(thisChart.Id);
         }
+        #endregion
+
+        #region UtilityFunctions
+
+        private static Chart GenerateChart(CommandContext ctx)
+        {
+            return new Chart
+            {
+                Id = Guid.NewGuid().ToString(),
+                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
+            };
+        }
 
         private static string GenerateHtml(IEnumerable<LastAlbum> albums, string html, string option)
         {
@@ -385,24 +390,24 @@ namespace Meiyounaise.Modules
                             playCount = album.PlayCount.Value + " Plays";
                         html += album.Images.Large != null
                             ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     case "names":
                         html += album.Images.Large != null
                             ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>";
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p></div>";
                         break;
                     case "blank":
                         html += album.Images.Large != null
                             ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"></div>"
-                            : "<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"></div>";
+                            : "<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb\"></div>";
                         break;
                     case "plays":
                         if (album.PlayCount.HasValue)
                             playCount = album.PlayCount.Value + " Plays";
                         html += album.Images.Large != null
                             ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
+                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
                     default:
                         throw new Exception($"`{option}` is not a valid option");
@@ -576,7 +581,7 @@ namespace Meiyounaise.Modules
                 }
                 catch (Exception)
                 {
-                    result = "https://lastfm-img2.akamaized.net/i/u/174s/4128a6eb29f94943c9d206c08e625904";
+                    result = "https://lastfm.freetls.fastly.net/i/u/avatar/2a96cbd8b46e442fc41c2b86b821562f";
                 }
 
                 return new KeyValuePair<LastArtist, string>(artist, result);
@@ -593,6 +598,8 @@ namespace Meiyounaise.Modules
             public string Id { get; set; }
             public string User { get; set; }
         }
+
+        #endregion
 
         #region Overloads
 
