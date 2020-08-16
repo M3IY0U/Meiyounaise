@@ -276,6 +276,7 @@ namespace Meiyounaise.Modules
             {
                 throw new Exception($"User `{username}` didn't listen to any artists yet!");
             }
+
             try
             {
                 var html = await GenerateHtml(artists, HtmlTemplate, option);
@@ -364,9 +365,59 @@ namespace Meiyounaise.Modules
                 $"Requested by: {thisChart.User}");
             DeleteCharts(thisChart.Id);
         }
+
+        [Command("server"), Aliases("guild")]
+        public async Task Server(CommandContext ctx)
+        {
+            var users = new List<string>();
+            foreach (var (_, member) in ctx.Guild.Members)
+            {
+                if (Users.GetUser(member) == null || Users.GetUser(member).Last == "#" ||
+                    string.IsNullOrWhiteSpace(Users.GetUser(member).Last)) continue;
+                users.Add(Users.GetUser(member).Last);
+            }
+
+            var tasks = users.Select(GetNowPlaying);
+            var results = await Task.WhenAll(tasks);
+            var content = "";
+            foreach (var nowPlaying in results)
+            {
+                if (nowPlaying == null)
+                    continue;
+                var (user, track) = nowPlaying.Value;
+                if (track.IsNowPlaying == null || !track.IsNowPlaying.Value)
+                    continue;
+                content +=
+                    $"[{user}](https://www.last.fm/user/{user}) 🔊 [{track.Name}]({track.Url}) by [{track.ArtistName}]({track.ArtistUrl})\n";
+            }
+
+            if (content == "")
+            {
+                await ctx.RespondAsync("No one in this guild is scrobbling something right now.");
+                return;
+            }
+
+            var eb = new DiscordEmbedBuilder()
+                .WithAuthor($"Currently playing in {ctx.Guild.Name}",
+                    iconUrl: "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
+                .WithColor(DiscordColor.Red)
+                .WithThumbnail(ctx.Guild.IconUrl)
+                .WithDescription(content);
+            await ctx.RespondAsync(embed: eb.Build());
+        }
+
         #endregion
 
         #region UtilityFunctions
+
+        private static async Task<KeyValuePair<string, LastTrack>?> GetNowPlaying(string user)
+        {
+            var response = await Client.User.GetRecentScrobbles(user);
+            var isNowPlaying = response.Content.First().IsNowPlaying;
+            if (isNowPlaying != null && (!response.Success || !isNowPlaying.Value))
+                return null;
+            return new KeyValuePair<string, LastTrack>(user, response.Content.First());
+        }
 
         private static Chart GenerateChart(CommandContext ctx)
         {
