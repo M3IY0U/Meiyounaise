@@ -413,6 +413,8 @@ namespace Meiyounaise.Modules
         private static async Task<KeyValuePair<string, LastTrack>?> GetNowPlaying(string user)
         {
             var response = await Client.User.GetRecentScrobbles(user);
+            if (!response.Success)
+                return null;
             var isNowPlaying = response.Content.First().IsNowPlaying;
             if (isNowPlaying != null && (!response.Success || !isNowPlaying.Value))
                 return null;
