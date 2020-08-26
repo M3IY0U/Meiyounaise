@@ -369,7 +369,7 @@ namespace Meiyounaise.Modules
         [Command("server"), Aliases("guild")]
         public async Task Server(CommandContext ctx)
         {
-            var users = new List<string>();
+            var users = new HashSet<string>();
             foreach (var (_, member) in ctx.Guild.Members)
             {
                 if (Users.GetUser(member) == null || Users.GetUser(member).Last == "#" ||
