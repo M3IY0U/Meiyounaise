@@ -367,6 +367,8 @@ namespace Meiyounaise.Modules
         }
 
         [Command("server"), Aliases("guild")]
+        [Description(
+            "Displays all users in the server which linked their account and are currently scrobbling in one command.")]
         public async Task Server(CommandContext ctx)
         {
             var users = new HashSet<string>();
@@ -404,6 +406,44 @@ namespace Meiyounaise.Modules
                 .WithThumbnail(ctx.Guild.IconUrl)
                 .WithDescription(content);
             await ctx.RespondAsync(embed: eb.Build());
+        }
+
+        [Command("tagcloud"), Aliases("tc")]
+        [Description("Generate a tag cloud out of the top 5 tags of your top 25 artists within a given timespan.")]
+        public async Task TagCloud(CommandContext ctx, string timespan = "overall", string username = "")
+        {
+            var id = Guid.NewGuid();
+            var thisChart = new Chart
+            {
+                Id = id.ToString(),
+                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
+            };
+            await ctx.TriggerTypingAsync();
+
+            var user = Users.GetUser(ctx.User);
+            if (user == null && username == "")
+            {
+                throw new Exception(
+                    $"I have no Last.fm Username set for you! Set it using `{Guilds.GetGuild(ctx.Guild).Prefix}fm set [Name]`!");
+            }
+
+            var name = username == "" ? user?.Last : username;
+
+            var result = await Client.User.GetTopArtists(name, (LastStatsTimeSpan) ConvertTimeSpan(timespan), 1, 25);
+            var allTags = new List<string>();
+            foreach (var artist in result.Content)
+            {
+                var tags = await Client.Artist.GetTopTagsAsync(artist.Name);
+                allTags.AddRange(tags.Select(x => x.Name).Where(tag => !tag.Contains("seen") || !tag.Contains("live")).Take(5));
+            }
+
+            var url =
+                $"https://quickchart.io/wordcloud?width=800&height=800&maxNumWords=125&rotation=60&minWordLength=2&scale=sqrt&format=png&fontScale=50&text={string.Join(' ', allTags)}";
+
+            await Utilities.DownloadAsync(new Uri(url), $"{Utilities.DataPath}{thisChart.Id}.png");
+            await ctx.RespondWithFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
+                $"Requested by: {thisChart.User}");
+            File.Delete($"{Utilities.DataPath}{thisChart.Id}.png");
         }
 
         #endregion

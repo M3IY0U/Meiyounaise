@@ -6,6 +6,8 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using Meiyounaise.Modules;
+using Microsoft.Extensions.Logging;
 
 namespace Meiyounaise
 {
@@ -20,10 +22,9 @@ namespace Meiyounaise
             Client = new DiscordClient(new DiscordConfiguration()
             {
                 AutoReconnect = true,
-                LogLevel = LogLevel.Info,
+                MinimumLogLevel = LogLevel.Information,
                 Token = Utilities.GetKey("bottoken"),
-                TokenType = TokenType.Bot,
-                UseInternalLogHandler = true
+                TokenType = TokenType.Bot
             });
 
             Client.UseInteractivity(new InteractivityConfiguration());
@@ -48,6 +49,7 @@ namespace Meiyounaise
             Client.MessageCreated += DB.EventHandlers.MessageCreated;
             Client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
             Client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
+            Client.MessageReactionAdded += TranslationModule.TranslateWithReaction;
             Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
         }
 

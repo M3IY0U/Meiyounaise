@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using GoogleTranslateFreeApi;
 using Meiyounaise.DB;
 using WanaKanaNet;
@@ -46,7 +47,7 @@ namespace Meiyounaise.Modules
                 await SendLanguageCodes(ctx);
                 return;
             }
-            
+
             text = await CheckInput(text, ctx);
 
             try
@@ -62,7 +63,7 @@ namespace Meiyounaise.Modules
                                     $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
             }
         }
-        
+
         [Command("romaji")]
         [Description("Converts japanese characters to romaji.")]
         public async Task ToRomanji(CommandContext ctx, [RemainingText] string text = "")
@@ -142,6 +143,35 @@ namespace Meiyounaise.Modules
                 throw new Exception("Translating failed!\n[» View on Google Translate]" +
                                     $"(https://translate.google.com/#view=home&op=translate&sl=auto&tl={lang}&text={text})"
                                         .Replace(" ", "%20"));
+            }
+        }
+
+        public static async Task TranslateWithReaction(MessageReactionAddEventArgs e)
+        {
+            var name = e.Emoji.GetDiscordName();
+            var message = await e.Channel.GetMessageAsync(e.Message.Id);
+            if (!name.Contains("flag_") || message.Reactions.Count > 1)
+                return;
+            try
+            {
+                var language = GoogleTranslator.GetLanguageByISO(name.Substring(name.LastIndexOf('_') + 1, 2));
+                if (!GoogleTranslator.IsLanguageSupported(language))
+                    return;
+                var client = new GoogleTranslator();
+                var result =
+                    await client.TranslateLiteAsync(message.Content, Language.Auto, language);
+                var eb = new DiscordEmbedBuilder()
+                    .WithDescription($"[Original Message]({message.JumpLink})\n{result.MergedTranslation}")
+                    .WithTitle("Translation Result")
+                    .WithFooter(
+                        $"Translated from {result.LanguageDetections.First().Language.FullName} to {result.TargetLanguage.FullName}");
+                await e.Channel.SendMessageAsync(e.User.Mention, embed: eb.Build());
+            }
+            catch (Exception)
+            {
+                var member = await e.Guild.GetMemberAsync(e.User.Id);
+                await member.SendMessageAsync(
+                    $"{DiscordEmoji.FromGuildEmote(Bot.Client, 578527109891227649)} Whoops, translating your message via reaction failed");
             }
         }
     }

@@ -7,18 +7,18 @@
 
     <ItemGroup>
       <PackageReference Include="CoolAsciiFaces.dll" Version="1.0.0" />
-      <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00709" />
-      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00709" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00709" />
+      <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00721" />
+      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-nightly-00721" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-nightly-00721" />
       <PackageReference Include="GoogleTranslateFreeApi" Version="1.1.1" />
       <PackageReference Include="Humanizer" Version="2.8.26" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.2.0" />
-      <PackageReference Include="log4net" Version="2.0.8" />
+      <PackageReference Include="log4net" Version="2.0.9" />
       <PackageReference Include="MarkovSharp" Version="4.0.32" />
-      <PackageReference Include="Microsoft.CodeAnalysis" Version="3.7.0-4.final" />
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.7.0-4.final" />
-      <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.7.0-4.final" />
-      <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.0-preview.6.20312.4" />
+      <PackageReference Include="Microsoft.CodeAnalysis" Version="3.8.0-2.final" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.8.0-2.final" />
+      <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.8.0-2.final" />
+      <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.0-preview.8.20407.4" />
       <PackageReference Include="SpotifyAPI-NET" Version="2.19.0" />
       <PackageReference Include="WanaKana-net" Version="1.0.0" />
     </ItemGroup>
