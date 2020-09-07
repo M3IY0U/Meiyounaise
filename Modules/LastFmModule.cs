@@ -110,23 +110,26 @@ namespace Meiyounaise.Modules
             var info = await Client.User.GetInfoAsync(username);
 
             var isPlaying = response.Content.First().IsNowPlaying != null ? "Now Playing" : "Last Track";
-
             var embed = new DiscordEmbedBuilder()
                 .WithAuthor($"{username} - {isPlaying}", $"https://www.last.fm/user/{username}",
+                    isPlaying.Contains("Now")
+                        ? "https://cdn.discordapp.com/attachments/565956920004050944/752590473247457300/play.png"
+                        : "https://cdn.discordapp.com/attachments/565956920004050944/752590397590470757/stop.png")
+                .WithColor(new DiscordColor(211, 31, 39))
+                .WithDescription(
+                    $"**[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})**")
+                .WithFooter($"{info.Content.Playcount} total scrobbles on last.fm",
                     "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
-                .WithColor(DiscordColor.Red)
-                .WithDescription(string.Concat(
-                    $"[{response.Content.First().ArtistName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
-                    " - ",
-                    $"[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})"))
-                .WithFooter($"{info.Content.Playcount} total scrobbles on last.fm")
                 .WithThumbnail(response.Content.First().Images.Large != null
                     ? response.Content.First().Images.Large.AbsoluteUri
                     : "https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb")
+                .AddField("Artist",
+                    $"[{response.Content.First().ArtistName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
+                    true)
                 .AddField("Album",
                     response.Content.First().AlbumName != ""
                         ? $"[{response.Content.First().AlbumName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().AlbumName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})"
-                        : "No album linked on last.fm!");
+                        : "No album linked on last.fm!", true);
             await ctx.RespondAsync(embed: embed.Build());
         }
 
@@ -434,7 +437,8 @@ namespace Meiyounaise.Modules
             foreach (var artist in result.Content)
             {
                 var tags = await Client.Artist.GetTopTagsAsync(artist.Name);
-                allTags.AddRange(tags.Select(x => x.Name).Where(tag => !tag.Contains("seen") || !tag.Contains("live")).Take(5));
+                allTags.AddRange(tags.Select(x => x.Name.Replace(" ", ""))
+                    .Where(tag => !tag.Contains("seen") || !tag.Contains("live")).Take(5));
             }
 
             var url =
