@@ -124,7 +124,7 @@ namespace Meiyounaise.Modules
                     ? response.Content.First().Images.Large.AbsoluteUri
                     : "https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb")
                 .AddField("Artist",
-                    $"[{response.Content.First().ArtistName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
+                    $"[{response.Content.First().ArtistName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
                     true)
                 .AddField("Album",
                     response.Content.First().AlbumName != ""
@@ -393,7 +393,7 @@ namespace Meiyounaise.Modules
                 if (track.IsNowPlaying == null || !track.IsNowPlaying.Value)
                     continue;
                 content +=
-                    $"[{user}](https://www.last.fm/user/{user}) 🔊 [{track.Name}]({track.Url}) by [{track.ArtistName}]({track.ArtistUrl})\n";
+                    $"[{user}](https://www.last.fm/user/{user}) 🔊 [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")}) by [{track.ArtistName}]({track.ArtistUrl})\n";
             }
 
             if (content == "")
