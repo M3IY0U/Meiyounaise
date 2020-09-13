@@ -121,8 +121,8 @@ namespace Meiyounaise.Modules
                 .WithFooter($"{info.Content.Playcount} total scrobbles on last.fm",
                     "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
                 .WithThumbnail(response.Content.First().Images.Large != null
-                    ? response.Content.First().Images.Large.AbsoluteUri
-                    : "https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb")
+                    ? response.Content.First().Images.Large.AbsoluteUri.Replace("/174s/", "/")
+                    : "https://lastfm.freetls.fastly.net/i/u/c6f59c1e5e7240a4c0d427abd71f3dbb")
                 .AddField("Artist",
                     $"[{response.Content.First().ArtistName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
                     true)
