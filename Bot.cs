@@ -49,7 +49,6 @@ namespace Meiyounaise
             Client.MessageCreated += DB.EventHandlers.MessageCreated;
             Client.GuildMemberRemoved += DB.EventHandlers.UserRemoved;
             Client.MessageReactionAdded += DB.EventHandlers.ReactionAdded;
-            Client.MessageReactionAdded += TranslationModule.TranslateWithReaction;
             Client.MessageReactionRemoved += DB.EventHandlers.ReactionRemoved;
         }
 
