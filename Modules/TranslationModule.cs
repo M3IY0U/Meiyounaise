@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using GoogleTranslateFreeApi;
 using Meiyounaise.DB;
 using WanaKanaNet;
@@ -19,7 +17,7 @@ namespace Meiyounaise.Modules
         [Description("Translates your message to german.")]
         public async Task German(CommandContext ctx, [RemainingText] string text)
         {
-            text = await CheckInput(text, ctx);
+            text = await Utilities.CheckInput(text, ctx);
 
             var translation = await GTranslate(text, Language.German.ISO639);
             await ctx.RespondAsync(translation);
@@ -30,7 +28,7 @@ namespace Meiyounaise.Modules
         [Description("Translates your message to english.")]
         public async Task English(CommandContext ctx, [RemainingText] string text)
         {
-            text = await CheckInput(text, ctx);
+            text = await Utilities.CheckInput(text, ctx);
 
             var translation = await GTranslate(text, Language.English.ISO639);
             await ctx.RespondAsync(translation);
@@ -48,7 +46,7 @@ namespace Meiyounaise.Modules
                 return;
             }
 
-            text = await CheckInput(text, ctx);
+            text = await Utilities.CheckInput(text, ctx);
 
             try
             {
@@ -63,12 +61,14 @@ namespace Meiyounaise.Modules
                                     $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
             }
         }
+       
+        #region Kana
 
         [Command("romaji")]
         [Description("Converts japanese characters to romaji.")]
         public async Task ToRomanji(CommandContext ctx, [RemainingText] string text = "")
         {
-            text = await CheckInput(text, ctx);
+            text = await Utilities.CheckInput(text, ctx);
             await ctx.RespondAsync(WanaKana.ToRomaji(text));
         }
 
@@ -76,7 +76,7 @@ namespace Meiyounaise.Modules
         [Description("Converts *doesn't translate* text to hiragana.")]
         public async Task ToHiragana(CommandContext ctx, [RemainingText] string text)
         {
-            text = await CheckInput(text, ctx);
+            text = await Utilities.CheckInput(text, ctx);
             await ctx.RespondAsync(WanaKana.ToHiragana(text));
         }
 
@@ -84,16 +84,11 @@ namespace Meiyounaise.Modules
         [Description("Converts *doesn't translate* text to katakana.")]
         public async Task ToKatakana(CommandContext ctx, [RemainingText] string text)
         {
-            text = await CheckInput(text, ctx);
+            text = await Utilities.CheckInput(text, ctx);
             await ctx.RespondAsync(WanaKana.ToKatakana(text));
         }
 
-        private static async Task<string> CheckInput(string input, CommandContext ctx)
-        {
-            if (!string.IsNullOrEmpty(input)) return input;
-            var messages = await ctx.Channel.GetMessagesAsync(2);
-            return messages.Last().Content;
-        }
+        #endregion
 
         private static async Task SendLanguageCodes(CommandContext ctx)
         {

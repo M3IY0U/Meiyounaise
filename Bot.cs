@@ -6,7 +6,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
-using Meiyounaise.Modules;
 using Microsoft.Extensions.Logging;
 
 namespace Meiyounaise

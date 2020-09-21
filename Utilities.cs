@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using Meiyounaise.DB;
 using Microsoft.Data.Sqlite;
@@ -73,6 +75,13 @@ namespace Meiyounaise
                 var data = JsonConvert.DeserializeObject<dynamic>(rs);
                 return $"https://haste.timostestdoma.in/{data.key}";
             }
+        }
+        
+        public static async Task<string> CheckInput(string input, CommandContext ctx)
+        {
+            if (!string.IsNullOrEmpty(input)) return input;
+            var messages = await ctx.Channel.GetMessagesAsync(2);
+            return messages.Last().Content;
         }
         
         public static async Task DownloadAsync(Uri requestUri, string filename)

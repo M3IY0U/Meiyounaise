@@ -13,6 +13,7 @@
       <PackageReference Include="GoogleTranslateFreeApi" Version="1.1.1" />
       <PackageReference Include="Humanizer" Version="2.8.26" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.2.0" />
+      <PackageReference Include="JikanDotNet" Version="1.5.0" />
       <PackageReference Include="log4net" Version="2.0.9" />
       <PackageReference Include="MarkovSharp" Version="4.0.32" />
       <PackageReference Include="Microsoft.CodeAnalysis" Version="3.8.0-2.final" />
