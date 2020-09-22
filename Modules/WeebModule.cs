@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using JikanDotNet;
 using System.Linq;
 using DSharpPlus.Entities;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Interactivity;
+using YouTubeSearch;
 
 namespace Meiyounaise.Modules
 {
@@ -22,7 +25,6 @@ namespace Meiyounaise.Modules
             var aired = anime.Aired.To.HasValue
                 ? $"From {anime.Aired.From?.ToShortDateString()} to {anime.Aired.To.Value.ToShortDateString()}"
                 : $"{(anime.Aired.From.HasValue ? anime.Aired.From.Value.ToShortDateString() : "?")}";
-
             try
             {
                 var eb = new DiscordEmbedBuilder()
@@ -31,7 +33,7 @@ namespace Meiyounaise.Modules
                     .WithThumbnail(anime.ImageURL)
                     .WithDescription(anime.Synopsis.Length > 2000
                         ? anime.Synopsis.Remove(2000)
-                        : anime.Synopsis.Remove(anime.Synopsis.LastIndexOf('[')))
+                        : anime.Synopsis)
                     .AddField("Genre", $"{string.Join(", ", anime.Genres)}", true)
                     .AddField("Episodes", anime.Episodes.HasValue ? anime.Episodes.Value.ToString() : "Unknown", true)
                     .AddField("Aired", aired, true)
@@ -75,6 +77,89 @@ namespace Meiyounaise.Modules
             {
                 throw new Exception($"Something went wrong trying to get manga `{query}`");
             }
+        }
+
+        [Command("opening"), Aliases("op")]
+        public async Task Opening(CommandContext ctx, [RemainingText] string query)
+        {
+            var search = await _jikan.SearchAnime(query);
+            var anime = await _jikan.GetAnime(search.Results.First().MalId);
+            var interactivity = ctx.Client.GetInteractivity();
+
+            var yt = new VideoSearch();
+
+            var links = new List<Page>();
+            var counter = 0;
+            foreach (var opening in anime.OpeningTheme.Select(x => x.Substring(x.IndexOf('\"') + 1)))
+            {
+                var video = await yt.GetVideos($"{opening.Remove(opening.IndexOf('\"'))} {anime.Title}", 1);
+                links.Add(new Page(
+                    $"Opening {++counter}/{anime.OpeningTheme.Count}: {anime.OpeningTheme.ElementAt(counter - 1)}\n{video.First().getUrl()}"));
+            }
+
+            if (links.Count > 1)
+                await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, links);
+            else
+                await ctx.RespondAsync(links.First().Content);
+        }
+
+        [Command("ending"), Aliases("ed")]
+        public async Task Ending(CommandContext ctx, [RemainingText] string query)
+        {
+            var search = await _jikan.SearchAnime(query);
+            var anime = await _jikan.GetAnime(search.Results.First().MalId);
+            var interactivity = ctx.Client.GetInteractivity();
+
+            var yt = new VideoSearch();
+
+            var links = new List<Page>();
+            var counter = 0;
+            foreach (var ending in anime.EndingTheme.Select(x => x.Substring(x.IndexOf('\"') + 1)))
+            {
+                var q = $"{ending.Remove(ending.IndexOf('\"'))} {anime.Title}";
+                var video = await yt.GetVideos(q, 1);
+                links.Add(new Page(
+                    $"Ending {++counter}/{anime.EndingTheme.Count}: {anime.EndingTheme.ElementAt(counter - 1)}\n{video.First().getUrl()}"));
+            }
+
+            if (links.Count > 1)
+                await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, links);
+            else
+                await ctx.RespondAsync(links.First().Content);
+        }
+
+        [Command("recommend"), Aliases("r", "rec")]
+        public async Task Recommend(CommandContext ctx, [RemainingText] string query)
+        {
+            var search = await _jikan.SearchAnime(query);
+            var recommendations = await _jikan.GetAnimeRecommendations(search.Results.First().MalId);
+            var interactivity = ctx.Client.GetInteractivity();
+
+            var pages = recommendations.RecommendationCollection.Select(rec
+                    => new DiscordEmbedBuilder()
+                        .WithAuthor(rec.Title, rec.RecommendationUrl)
+                        .WithColor(DiscordColor.Azure)
+                        .WithImageUrl(rec.ImageURL))
+                .Select(eb => new Page(embed: eb));
+
+            await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
+        }
+
+        [Command("mangarecommend"), Aliases("mrecommend", "mr", "mrec")]
+        public async Task MangaRecommend(CommandContext ctx, [RemainingText] string query)
+        {
+            var search = await _jikan.SearchAnime(query);
+            var recommendations = await _jikan.GetMangaRecommendations(search.Results.First().MalId);
+            var interactivity = ctx.Client.GetInteractivity();
+
+            var pages = recommendations.RecommendationCollection.Select(rec
+                    => new DiscordEmbedBuilder()
+                        .WithAuthor(rec.Title, rec.RecommendationUrl)
+                        .WithColor(DiscordColor.Azure)
+                        .WithImageUrl(rec.ImageURL))
+                .Select(eb => new Page(embed: eb));
+
+            await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, pages);
         }
 
         [Command("character"), Aliases("char")]

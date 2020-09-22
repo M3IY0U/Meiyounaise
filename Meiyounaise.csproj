@@ -22,6 +22,7 @@
       <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.0-preview.8.20407.4" />
       <PackageReference Include="SpotifyAPI-NET" Version="2.19.0" />
       <PackageReference Include="WanaKana-net" Version="1.0.0" />
+      <PackageReference Include="YouTubeSearch" Version="2.2.4" />
     </ItemGroup>
 
 </Project>
