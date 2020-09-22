@@ -38,7 +38,10 @@ namespace Meiyounaise.Modules
                     .AddField("Episodes", anime.Episodes.HasValue ? anime.Episodes.Value.ToString() : "Unknown", true)
                     .AddField("Aired", aired, true)
                     .AddField("Rating", anime.Score.HasValue ? anime.Score.ToString() : "No Rating", true)
-                    .AddField("Studio(s)", string.Join(", ", anime.Studios.Select(x => x.Name)), true)
+                    .AddField("Studio(s)",
+                        anime.Studios.Count == 0
+                            ? "No known studio."
+                            : string.Join(", ", anime.Studios.Select(x => x.Name)), true)
                     .AddField("Length", anime.Duration, true);
                 await ctx.RespondAsync(embed: eb.Build());
             }
