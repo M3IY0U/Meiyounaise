@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using DSharpPlus.Entities;
 using Microsoft.Data.Sqlite;
 
@@ -31,13 +32,14 @@ namespace Meiyounaise.DB
                             JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
                             ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded")),
                             PrevMessageAmount = Convert.ToInt32(rdr.GetValue(rdr.GetOrdinal("prevMessageAmount"))),
-                            PrevMessages = new ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>>(),
+                            PrevMessages = new ConcurrentDictionary<ulong, KeyValuePair<DiscordMessage, int>>(),
+                            FmLog = new ConcurrentDictionary<ulong, string>(),
                             BridgeChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("bridgeChannel")))
                         });
                     }
                 }
             }
-            
+
             Utilities.Con.Close();
         }
 
@@ -61,7 +63,8 @@ namespace Meiyounaise.DB
                             JlMessageChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("jlMsgChannel"))),
                             ReactionNeeded = rdr.GetInt32(rdr.GetOrdinal("reactionNeeded")),
                             PrevMessageAmount = Convert.ToInt32(rdr.GetValue(rdr.GetOrdinal("prevMessageAmount"))),
-                            PrevMessages = new ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>>(),
+                            PrevMessages = new ConcurrentDictionary<ulong, KeyValuePair<DiscordMessage, int>>(),
+                            FmLog = new ConcurrentDictionary<ulong, string>(),
                             BridgeChannel = Convert.ToUInt64(rdr.GetValue(rdr.GetOrdinal("bridgeChannel")))
                         };
                         GuildList.Remove(GetGuild(guild));
@@ -81,7 +84,7 @@ namespace Meiyounaise.DB
             var enumerable = result.ToList();
             return enumerable.ToList().Any() ? enumerable.ToList().First() : null;
         }
-
+        
         public class Guild
         {
             public Guild()
@@ -98,12 +101,22 @@ namespace Meiyounaise.DB
                 JlMessageChannel = 0;
                 ReactionNeeded = 0;
                 PrevMessageAmount = 0;
-                PrevMessages = new ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>>();
+                PrevMessages = new ConcurrentDictionary<ulong, KeyValuePair<DiscordMessage, int>>();
+                FmLog = new ConcurrentDictionary<ulong, string>();
                 BridgeChannel = 0;
+            }
+            
+            public void UpdateSongInChannel(ulong channel, string name)
+            {
+                if (!FmLog.ContainsKey(channel))
+                    FmLog.TryAdd(channel, name);
+                else
+                    FmLog.TryUpdate(channel, name, FmLog[channel]);
             }
 
             public int PrevMessageAmount { get; set; }
-            public ConcurrentDictionary<ulong,KeyValuePair<DiscordMessage,int>> PrevMessages { get; set; }
+            public ConcurrentDictionary<ulong, KeyValuePair<DiscordMessage, int>> PrevMessages { get; set; }
+            public ConcurrentDictionary<ulong, string> FmLog { get; set; }
             public string Prefix { get; set; }
             public ulong Id { get; set; }
             public ulong BoardChannel { get; set; }

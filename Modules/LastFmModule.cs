@@ -131,6 +131,7 @@ namespace Meiyounaise.Modules
                         ? $"[{response.Content.First().AlbumName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().AlbumName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})"
                         : "No album linked on last.fm!", true);
             await ctx.RespondAsync(embed: embed.Build());
+            Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id, response.Content.First().Name);
         }
 
         [Command("recent"), Aliases("rs")]
@@ -384,7 +385,7 @@ namespace Meiyounaise.Modules
 
             var tasks = users.Select(GetNowPlaying);
             var results = await Task.WhenAll(tasks);
-            var content = "";
+            var texts = new List<string>(); 
             foreach (var nowPlaying in results)
             {
                 if (nowPlaying == null)
@@ -392,11 +393,10 @@ namespace Meiyounaise.Modules
                 var (user, track) = nowPlaying.Value;
                 if (track.IsNowPlaying == null || !track.IsNowPlaying.Value)
                     continue;
-                content +=
-                    $"[{user}](https://www.last.fm/user/{user}) 🔊 [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")}) by [{track.ArtistName}]({track.ArtistUrl})\n";
+                texts.Add($"🔊 [{track.ArtistName}]({track.ArtistUrl}) - [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")}) | <@{Users.UserList.Find(x => x.Last == user)?.Id}> [[{user}](https://www.last.fm/user/{user})]");
             }
 
-            if (content == "")
+            if (texts.Count == 0)
             {
                 await ctx.RespondAsync("No one in this guild is scrobbling something right now.");
                 return;
@@ -407,7 +407,7 @@ namespace Meiyounaise.Modules
                     iconUrl: "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
                 .WithColor(DiscordColor.Red)
                 .WithThumbnail(ctx.Guild.IconUrl)
-                .WithDescription(content);
+                .WithDescription(string.Join("\n⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤\n", texts));
             await ctx.RespondAsync(embed: eb.Build());
         }
 

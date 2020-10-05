@@ -9,6 +9,7 @@ using DSharpPlus.Entities;
 using Meiyounaise.DB;
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
+using YouTubeSearch;
 
 namespace Meiyounaise
 {
@@ -65,6 +66,13 @@ namespace Meiyounaise
             return result;
         }
 
+        public static async Task<string> SearchYoutube(string query)
+        {
+            var yt = new VideoSearch();
+            var videos = await yt.GetVideos(query, 1);
+            return videos.First().getUrl();
+        } 
+        
         public static async Task<string> ToHastebin(string content)
         {
             using (var client = new HttpClient())

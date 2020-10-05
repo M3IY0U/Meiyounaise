@@ -10,6 +10,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using MarkovSharp.TokenisationStrategies;
 using Meiyounaise.DB;
+using YouTubeSearch;
 
 namespace Meiyounaise.Modules
 {
@@ -207,6 +208,20 @@ namespace Meiyounaise.Modules
                 new Uri($"https://api.streamelements.com/kappa/v2/speech?voice=Hans&text={message}"), "speech.mp3");
             await ctx.RespondWithFileAsync("speech.mp3");
             File.Delete("speech.mp3");
+        }
+
+        [Command("youtube"), Aliases("yt")]
+        public async Task Youtube(CommandContext ctx, [RemainingText] string input)
+        {
+            if (!string.IsNullOrEmpty(input))
+                await ctx.RespondAsync(await Utilities.SearchYoutube(input));
+            else
+            {
+                if (!Guilds.GetGuild(ctx.Guild).FmLog.ContainsKey(ctx.Channel.Id))
+                    throw new Exception("No songs have been logged in this channel yet");
+                Guilds.GetGuild(ctx.Guild).FmLog.TryGetValue(ctx.Channel.Id, out var cachedSong);
+                await ctx.RespondAsync(await Utilities.SearchYoutube(cachedSong));
+            }
         }
     }
 }

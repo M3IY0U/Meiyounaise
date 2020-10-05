@@ -6,6 +6,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using Meiyounaise.DB;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
 using SpotifyAPI.Web.Enums;
@@ -39,6 +40,19 @@ namespace Meiyounaise.Modules
         public async Task SpotifyCommand(CommandContext ctx, [RemainingText] string input)
         {
             _spotify = AuthSpotify();
+
+            if (string.IsNullOrEmpty(input))
+            {
+                if (!Guilds.GetGuild(ctx.Guild).FmLog.ContainsKey(ctx.Channel.Id))
+                    throw new Exception("No songs have been logged in this channel yet");
+                Guilds.GetGuild(ctx.Guild).FmLog.TryGetValue(ctx.Channel.Id, out var cachedSong);
+                var tracksSearchItems = await _spotify.SearchItemsAsync(cachedSong, SearchType.Track);
+                if (tracksSearchItems.Tracks.Items.Count == 0)
+                    throw new Exception($"Nothing was found using query `{cachedSong}`");
+                await ctx.RespondAsync(tracksSearchItems.Tracks.Items.First().ExternUrls.First().Value);
+                return;
+            }
+
             var interactivity = ctx.Client.GetInteractivity();
             var result = await _spotify.SearchItemsAsync(input, SearchType.All);
             if (!result.Albums.Items.Any() && !result.Artists.Items.Any() && !result.Tracks.Items.Any())
@@ -130,7 +144,8 @@ namespace Meiyounaise.Modules
         {
             _spotify = AuthSpotify();
             var result = await _spotify.SearchItemsAsync(artist, SearchType.Artist);
-            var pages = result.Artists.Items.Select(a => new DiscordEmbedBuilder().WithColor(new DiscordColor("#1DB954"))
+            var pages = result.Artists.Items.Select(a => new DiscordEmbedBuilder()
+                    .WithColor(new DiscordColor("#1DB954"))
                     .WithAuthor(a.Name, a.ExternalUrls.First().Value)
                     .WithThumbnail(a.Images.First().Url)
                     .WithDescription(string.Join(", ", a.Genres)))
@@ -140,18 +155,20 @@ namespace Meiyounaise.Modules
         }
 
         [Command("related"), Aliases("similar")]
-        public async Task Test(CommandContext ctx, [RemainingText]string input)
+        public async Task Test(CommandContext ctx, [RemainingText] string input)
         {
             _spotify = AuthSpotify();
             var search = await _spotify.SearchItemsAsync(input, SearchType.Artist);
             var severalArtists = await _spotify.GetRelatedArtistsAsync(search.Artists.Items.First().Id);
             var result = search.Artists.Items.First();
             var eb = new DiscordEmbedBuilder()
-                .WithAuthor($"Similar artists to {result.Name}", result.ExternalUrls.First().Value, result.Images.First().Url)
+                .WithAuthor($"Similar artists to {result.Name}", result.ExternalUrls.First().Value,
+                    result.Images.First().Url)
                 .WithFooter("Based on Spotify")
                 .WithColor(new DiscordColor(29, 185, 84))
-                .WithDescription(severalArtists.Artists.Aggregate("", (current, artist) => current + $"[{artist.Name}]({artist.ExternalUrls.First().Value})\n"));
-            await ctx.RespondAsync(embed:eb.Build());
+                .WithDescription(severalArtists.Artists.Aggregate("",
+                    (current, artist) => current + $"[{artist.Name}]({artist.ExternalUrls.First().Value})\n"));
+            await ctx.RespondAsync(embed: eb.Build());
         }
 
         [Command("artist")]
