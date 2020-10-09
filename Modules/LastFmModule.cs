@@ -131,7 +131,7 @@ namespace Meiyounaise.Modules
                         ? $"[{response.Content.First().AlbumName}](https://www.last.fm/music/{response.Content.First().ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")}/{response.Content.First().AlbumName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})"
                         : "No album linked on last.fm!", true);
             await ctx.RespondAsync(embed: embed.Build());
-            Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id, response.Content.First().Name);
+            Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id, $"{response.Content.First().Name} {response.Content.First().ArtistName}");
         }
 
         [Command("recent"), Aliases("rs")]
