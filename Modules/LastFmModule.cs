@@ -393,7 +393,7 @@ namespace Meiyounaise.Modules
                 var (user, track) = nowPlaying.Value;
                 if (track.IsNowPlaying == null || !track.IsNowPlaying.Value)
                     continue;
-                texts.Add($"🔊 [{track.ArtistName}]({track.ArtistUrl}) - [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")}) | <@{Users.UserList.Find(x => x.Last == user)?.Id}> [[{user}](https://www.last.fm/user/{user})]");
+                texts.Add($"<@{Users.UserList.Find(x => x.Last == user)?.Id}> [🔊](https://www.last.fm/user/{user}) [{track.ArtistName}]({track.ArtistUrl}) - [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})");
             }
 
             if (texts.Count == 0)
