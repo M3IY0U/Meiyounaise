@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -12,10 +13,10 @@ namespace Meiyounaise.DB
 {
     public static class EventHandlers
     {
-        public static async Task Ready(ReadyEventArgs e)
+        public static async Task Ready(DiscordClient sender, ReadyEventArgs readyEventArgs)
         {
             //Get all guilds the Bot is connected to
-            var guilds = e.Client.Guilds.Select(guild => guild.Value).ToList();
+            var guilds = sender.Guilds.Select(guild => guild.Value).ToList();
 
             //Once the Client is ready, get all guilds in the database and put them into dbGuilds
             var dbGuilds = new List<ulong>();
@@ -61,10 +62,10 @@ namespace Meiyounaise.DB
                 Console.WriteLine($"Tried to announce time it took to restart but couldn't because of: {ex.Message}");
             }
             //Update the "Playing" status to something random
-            await Status(e);
+            await Status(sender);
         }
 
-        public static Task GuildCreated(GuildCreateEventArgs args)
+        public static Task GuildCreated(DiscordClient sender, GuildCreateEventArgs args)
         {
             if (Guilds.GuildList.Exists(x => x.Id == args.Guild.Id)) return Task.CompletedTask;
             //Once the bot joins a guild (while he's online), add it to the Database
@@ -83,10 +84,9 @@ namespace Meiyounaise.DB
             return Task.CompletedTask;
         }
 
-        private static async Task Status(DiscordEventArgs e)
+        private static async Task Status(DiscordClient client)
         {
             //Set the status to a random one from the database
-            var c = e.Client;
             Utilities.Con.Open();
             using (var cmd =
                 new SqliteCommand(
@@ -96,7 +96,7 @@ namespace Meiyounaise.DB
                 {
                     if (rdr.Read())
                     {
-                        c?.UpdateStatusAsync(new DiscordActivity(rdr.GetString(0), ActivityType.ListeningTo));
+                        client?.UpdateStatusAsync(new DiscordActivity(rdr.GetString(0), ActivityType.ListeningTo));
                     }
                 }
             }
@@ -105,7 +105,7 @@ namespace Meiyounaise.DB
             await Task.CompletedTask;
         }
 
-        public static async Task UserJoined(GuildMemberAddEventArgs e)
+        public static async Task UserJoined(DiscordClient sender, GuildMemberAddEventArgs e)
         {
             var guild = Guilds.GetGuild(e.Guild);
             //Abort if the guild doesn't have join/leave messages set up
@@ -115,7 +115,7 @@ namespace Meiyounaise.DB
                 .SendMessageAsync(guild.JoinMsg.Replace("[user]", e.Member.Mention));
         }
 
-        public static async Task UserRemoved(GuildMemberRemoveEventArgs e)
+        public static async Task UserRemoved(DiscordClient sender, GuildMemberRemoveEventArgs e)
         {
             var guild = Guilds.GetGuild(e.Guild);
             if (guild == null)
@@ -136,7 +136,7 @@ namespace Meiyounaise.DB
             return m != "empty" && m != "" && c != 0;
         }
 
-        public static async Task ReactionAdded(MessageReactionAddEventArgs e)
+        public static async Task ReactionAdded(DiscordClient sender, MessageReactionAddEventArgs e)
         {
             //Bot reactions don't count
             if (e.User.IsBot) return;
@@ -246,7 +246,7 @@ namespace Meiyounaise.DB
             }
         }
 
-        public static async Task ReactionRemoved(MessageReactionRemoveEventArgs e)
+        public static async Task ReactionRemoved(DiscordClient sender, MessageReactionRemoveEventArgs e)
         {
             var guild = Guilds.GetGuild(e.Message.Channel.Guild);
             if (guild.BoardChannel == 0 || guild.ReactionNeeded == 0) return;
@@ -306,7 +306,7 @@ namespace Meiyounaise.DB
             return builder.Build();
         }
 
-        public static async Task CommandErrored(CommandErrorEventArgs e)
+        public static async Task CommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
         {
             if (e.Exception.Message.Contains("command was not found"))
             {
@@ -346,7 +346,7 @@ namespace Meiyounaise.DB
             await e.Context.RespondAsync(embed: eb.Build());
         }
 
-        public static async Task MessageCreated(MessageCreateEventArgs e)
+        public static async Task MessageCreated(DiscordClient sender, MessageCreateEventArgs e)
         {
             //Bots don't count
             if (e.Message.Author.IsBot) return;

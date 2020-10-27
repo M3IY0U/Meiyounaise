@@ -10,7 +10,6 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using MarkovSharp.TokenisationStrategies;
 using Meiyounaise.DB;
-using YouTubeSearch;
 
 namespace Meiyounaise.Modules
 {
