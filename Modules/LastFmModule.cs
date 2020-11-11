@@ -117,7 +117,7 @@ namespace Meiyounaise.Modules
                         : "https://cdn.discordapp.com/attachments/565956920004050944/752590397590470757/stop.png")
                 .WithColor(new DiscordColor(211, 31, 39))
                 .WithDescription(
-                    $"**[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})**")
+                    $"**[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　","%E3%80%80")})**")
                 .WithFooter($"{info.Content.Playcount} total scrobbles on last.fm",
                     "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
                 .WithThumbnail(response.Content.First().Images.Large != null
@@ -179,7 +179,7 @@ namespace Meiyounaise.Modules
                 eb.AddField(ago == "never" ? "Currently scrobbling" : ago, string.Concat(
                     $"[{track.ArtistName}](https://www.last.fm/music/{track.ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
                     " - ",
-                    $"[{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})"));
+                    $"[{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　","%E3%80%80")})"));
             }
 
             await ctx.RespondAsync(embed: eb.Build());
@@ -394,7 +394,7 @@ namespace Meiyounaise.Modules
                 var (user, track) = nowPlaying.Value;
                 if (track.IsNowPlaying == null || !track.IsNowPlaying.Value)
                     continue;
-                texts.Add($"<@{Users.UserList.Find(x => x.Last == user)?.Id}> [🔊](https://www.last.fm/user/{user}) [{track.ArtistName}]({track.ArtistUrl}) - [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)")})");
+                texts.Add($"<@{Users.UserList.Find(x => x.Last == user)?.Id}> [🔊](https://www.last.fm/user/{user}) [{track.ArtistName}]({track.ArtistUrl}) - [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　","%E3%80%80")})");
             }
 
             if (texts.Count == 0)
