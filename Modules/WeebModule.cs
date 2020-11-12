@@ -15,7 +15,7 @@ namespace Meiyounaise.Modules
     [Group("anime"), Aliases("a")]
     public class WeebModule : BaseCommandModule
     {
-        private IJikan _jikan = new Jikan(true);
+        private readonly IJikan _jikan = new Jikan();
 
         [GroupCommand]
         public async Task Anime(CommandContext ctx, [RemainingText] string query)
@@ -87,7 +87,8 @@ namespace Meiyounaise.Modules
         public async Task Opening(CommandContext ctx, [RemainingText] string query)
         {
             var search = await _jikan.SearchAnime(query);
-            var anime = await _jikan.GetAnime(search.Results.First().MalId);
+            var anime = await SkimForTheme(search.Results, a => a.OpeningTheme.Count > 0);
+            if (anime == null) throw new Exception("Anime either has no opening or was not found!");
             var interactivity = ctx.Client.GetInteractivity();
 
             var yt = new VideoSearch();
@@ -111,7 +112,8 @@ namespace Meiyounaise.Modules
         public async Task Ending(CommandContext ctx, [RemainingText] string query)
         {
             var search = await _jikan.SearchAnime(query);
-            var anime = await _jikan.GetAnime(search.Results.First().MalId);
+            var anime = await SkimForTheme(search.Results, a => a.EndingTheme.Count > 0);
+            if (anime == null) throw new Exception("Anime either has no ending or was not found!");
             var interactivity = ctx.Client.GetInteractivity();
 
             var yt = new VideoSearch();
@@ -130,6 +132,23 @@ namespace Meiyounaise.Modules
                 await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.Member, links);
             else
                 await ctx.RespondAsync(links.First().Content);
+        }
+
+        private async Task<Anime> SkimForTheme(IEnumerable<AnimeSearchEntry> results, Predicate<Anime> predicate)
+        {
+            var threshold = 5;
+            foreach (var entry in results)
+            {
+                var anime = await _jikan.GetAnime(entry.MalId);
+
+                if (predicate.Invoke(anime))
+                    return anime;
+
+                if (--threshold == 0)
+                    return null;
+            }
+
+            return null;
         }
 
         [Command("recommend"), Aliases("r", "rec")]
