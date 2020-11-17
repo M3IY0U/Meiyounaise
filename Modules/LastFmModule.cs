@@ -135,6 +135,69 @@ namespace Meiyounaise.Modules
                 $"{response.Content.First().Name} {response.Content.First().ArtistName}");
         }
 
+        [Command("sp")]
+        public async Task Spotify(CommandContext ctx, string username = "")
+        {
+            if (username == "")
+            {
+                if (username == "#" || Users.UserList.All(x => x.Id != ctx.User.Id))
+                {
+                    throw new Exception(
+                        "I don't have a last.fm name linked to your discord account. Set it using `fm set [Name]`.");
+                }
+
+                username = Users.GetUser(ctx.User).Last;
+            }
+
+            var response = await Client.User.GetRecentScrobbles(username);
+            if (!response.Success)
+            {
+                if (username == "")
+                {
+                    throw new Exception("last.fm's response was not successful, try again later!");
+                }
+
+                throw new Exception(
+                    $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+            }
+            
+            
+            
+            Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id,
+                $"{response.Content.First().Name} {response.Content.First().ArtistName}");
+            await Bot.Client.GetCommandsNext().RegisteredCommands.Values.First(x => x.Name == "spotify").ExecuteAsync(ctx);
+        }
+
+        [Command("yt")]
+        public async Task Youtube(CommandContext ctx, string username = "")
+        {
+            if (username == "")
+            {
+                if (username == "#" || Users.UserList.All(x => x.Id != ctx.User.Id))
+                {
+                    throw new Exception(
+                        "I don't have a last.fm name linked to your discord account. Set it using `fm set [Name]`.");
+                }
+
+                username = Users.GetUser(ctx.User).Last;
+            }
+
+            var response = await Client.User.GetRecentScrobbles(username);
+            if (!response.Success)
+            {
+                if (username == "")
+                {
+                    throw new Exception("last.fm's response was not successful, try again later!");
+                }
+
+                throw new Exception(
+                    $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
+            }
+            Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id,
+                $"{response.Content.First().Name} {response.Content.First().ArtistName}");
+            await Bot.Client.GetCommandsNext().RegisteredCommands.Values.First(x => x.Name == "youtube").ExecuteAsync(ctx);
+        }
+
         [Command("recent"), Aliases("rs")]
         public async Task FmRecent(CommandContext ctx,
             [Description("The user you want to see the most recent tracks of. Leave empty for own account.")]
