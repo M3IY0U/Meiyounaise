@@ -117,7 +117,7 @@ namespace Meiyounaise.Modules
                         : "https://cdn.discordapp.com/attachments/565956920004050944/752590397590470757/stop.png")
                 .WithColor(new DiscordColor(211, 31, 39))
                 .WithDescription(
-                    $"**[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　","%E3%80%80")})**")
+                    $"**[{response.Content.First().Name}]({response.Content.First().Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　", "%E3%80%80")})**")
                 .WithFooter($"{info.Content.Playcount} total scrobbles on last.fm",
                     "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
                 .WithThumbnail(response.Content.First().Images.Large != null
@@ -160,12 +160,10 @@ namespace Meiyounaise.Modules
                 throw new Exception(
                     $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
-            
-            
-            
             Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id,
                 $"{response.Content.First().Name} {response.Content.First().ArtistName}");
-            await Bot.Client.GetCommandsNext().RegisteredCommands.Values.First(x => x.Name == "spotify").ExecuteAsync(ctx);
+            await Bot.Client.GetCommandsNext().RegisteredCommands.Values.First(x => x.Name == "spotify")
+                .ExecuteAsync(ctx);
         }
 
         [Command("yt")]
@@ -193,17 +191,19 @@ namespace Meiyounaise.Modules
                 throw new Exception(
                     $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
+
             Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id,
                 $"{response.Content.First().Name} {response.Content.First().ArtistName}");
-            await Bot.Client.GetCommandsNext().RegisteredCommands.Values.First(x => x.Name == "youtube").ExecuteAsync(ctx);
+            await Bot.Client.GetCommandsNext().RegisteredCommands.Values.First(x => x.Name == "youtube")
+                .ExecuteAsync(ctx);
         }
 
         [Command("recent"), Aliases("rs")]
         public async Task FmRecent(CommandContext ctx,
-            [Description("The user you want to see the most recent tracks of. Leave empty for own account.")]
-            string username = "",
             [Description("How many recent tracks should be shown, maximum is 10, defaults to 5.")]
-            int count = 5)
+            int count = 5,
+            [Description("The user you want to see the most recent tracks of. Leave empty for own account.")]
+            string username = "")
         {
             if (username == "")
             {
@@ -242,7 +242,7 @@ namespace Meiyounaise.Modules
                 eb.AddField(ago == "never" ? "Currently scrobbling" : ago, string.Concat(
                     $"[{track.ArtistName}](https://www.last.fm/music/{track.ArtistName.Replace(" ", "+").Replace("(", "\\(").Replace(")", "\\)")})",
                     " - ",
-                    $"[{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　","%E3%80%80")})"));
+                    $"[{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　", "%E3%80%80")})"));
             }
 
             await ctx.RespondAsync(embed: eb.Build());
@@ -302,7 +302,6 @@ namespace Meiyounaise.Modules
                 $"Requested by: {thisChart.User}");
             DeleteCharts(thisChart.Id);
         }
-
 
         [Command("artistchart")]
         [Description("Returns an image of your top artists scrobbled on last.fm.")]
@@ -449,7 +448,7 @@ namespace Meiyounaise.Modules
 
             var tasks = users.Select(GetNowPlaying);
             var results = await Task.WhenAll(tasks);
-            var texts = new List<string>(); 
+            var texts = new List<string>();
             foreach (var nowPlaying in results)
             {
                 if (nowPlaying == null)
@@ -457,7 +456,8 @@ namespace Meiyounaise.Modules
                 var (user, track) = nowPlaying.Value;
                 if (track.IsNowPlaying == null || !track.IsNowPlaying.Value)
                     continue;
-                texts.Add($"<@{Users.UserList.Find(x => x.Last == user)?.Id}> [🔊](https://www.last.fm/user/{user}) [{track.ArtistName}]({track.ArtistUrl}) - [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　","%E3%80%80")})");
+                texts.Add(
+                    $"<@{Users.UserList.Find(x => x.Last == user)?.Id}> [🔊](https://www.last.fm/user/{user}) [{track.ArtistName}]({track.ArtistUrl}) - [{track.Name}]({track.Url.ToString().Replace("(", "\\(").Replace(")", "\\)").Replace("　", "%E3%80%80")})");
             }
 
             if (texts.Count == 0)
@@ -781,18 +781,18 @@ namespace Meiyounaise.Modules
         }
 
         [Command("recent"), Priority(1)]
-        public async Task FmRecentUser(CommandContext ctx, DiscordUser user = null, int count = 5)
+        public async Task FmRecentUser(CommandContext ctx, int count = 5, DiscordUser user = null)
         {
             if (user == null)
                 user = ctx.User;
             try
             {
                 var name = Utilities.ResolveName("last", user);
-                await FmRecent(ctx, name, count);
+                await FmRecent(ctx, count, name);
             }
             catch (Exception)
             {
-                await FmRecent(ctx, user.Username, count);
+                await FmRecent(ctx, count, user.Username);
             }
         }
 
