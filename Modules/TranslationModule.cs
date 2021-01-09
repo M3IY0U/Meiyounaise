@@ -12,11 +12,24 @@ namespace Meiyounaise.Modules
 {
     public class TranslationModule : BaseCommandModule
     {
+        private async Task Trogi(CommandContext ctx)
+            => await ctx.RespondAsync(embed: new DiscordEmbedBuilder()
+                .WithAuthor("So you just used the translate command")
+                .WithTitle("Let me tell you why it is currently disabled")
+                .WithDescription("**1.** I do not know what broke and how to fix it\n" +
+                                 "**2.** I currently do not have time to fix it\n" +
+                                 "**3.** I currently do not feel like fixing it\n" +
+                                 "**4.** Just fucking use NotSoBot")
+                .WithFooter("Contrary to popular belief, pinging me about this issue does not accelerate the process")
+                .Build());
+
         //TRANSLATE TO DE
         [Command("de")]
         [Description("Translates your message to german.")]
         public async Task German(CommandContext ctx, [RemainingText] string text)
         {
+            await Trogi(ctx);
+            return;
             text = await Utilities.CheckInput(text, ctx);
 
             var translation = await GTranslate(text, Language.German.ISO639);
@@ -28,6 +41,8 @@ namespace Meiyounaise.Modules
         [Description("Translates your message to english.")]
         public async Task English(CommandContext ctx, [RemainingText] string text)
         {
+            await Trogi(ctx);
+            return;
             text = await Utilities.CheckInput(text, ctx);
 
             var translation = await GTranslate(text, Language.English.ISO639);
@@ -40,6 +55,8 @@ namespace Meiyounaise.Modules
             "Translates your text into the desired language. If you enter \"codes\" instead of a code the bot will dm you all available codes.")]
         public async Task Translate(CommandContext ctx, string langcode, [RemainingText] string text)
         {
+            await Trogi(ctx);
+            return;
             if (langcode == "codes")
             {
                 await SendLanguageCodes(ctx);
@@ -61,7 +78,7 @@ namespace Meiyounaise.Modules
                                     $"You can make the bot send you all codes by using `{Guilds.GetGuild(ctx.Guild).Prefix}translate codes`");
             }
         }
-       
+
         #region Kana
 
         [Command("romaji")]
