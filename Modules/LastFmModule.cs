@@ -160,6 +160,7 @@ namespace Meiyounaise.Modules
                 throw new Exception(
                     $"last.fm's response was not successful! Are you sure `{username}` is a valid account?");
             }
+
             Guilds.GetGuild(ctx.Guild).UpdateSongInChannel(ctx.Channel.Id,
                 $"{response.Content.First().Name} {response.Content.First().ArtistName}");
             await Bot.Client.GetCommandsNext().RegisteredCommands.Values.First(x => x.Name == "spotify")
@@ -466,12 +467,55 @@ namespace Meiyounaise.Modules
                 return;
             }
 
+            var embedDescription = string.Join("\n⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤\n", texts);
+
+            if (embedDescription.Length > 2000)
+            {
+                await ctx.RespondAsync("Too many people were scrobbling for one embed!");
+                embedDescription.Remove(2000);
+            }
+
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor($"Currently playing in {ctx.Guild.Name}",
                     iconUrl: "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
                 .WithColor(DiscordColor.Red)
                 .WithThumbnail(ctx.Guild.IconUrl)
-                .WithDescription(string.Join("\n⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤\n", texts));
+                .WithDescription(embedDescription);
+            await ctx.RespondAsync(embed: eb.Build());
+        }
+
+        [Command("test")]
+        public async Task WeeklyServer(CommandContext ctx)
+        {
+            var users = new HashSet<string>();
+            foreach (var (_, member) in ctx.Guild.Members)
+            {
+                if (Users.GetUser(member) == null || Users.GetUser(member).Last == "#" ||
+                    string.IsNullOrWhiteSpace(Users.GetUser(member).Last)) continue;
+                users.Add(Users.GetUser(member).Last);
+            }
+
+
+            var tasks = users.Select(user => GetTopTracks("week", user));
+            var results = await Task.WhenAll(tasks);
+            var counter = new Dictionary<Track, long>();
+            foreach (var result in results)
+            {
+                if (result.Toptracks == null) continue;
+                if (!result.Toptracks.Track.Any()) continue;
+                var track = result.Toptracks.Track.First();
+
+                if (!counter.ContainsKey(track))
+                    counter.Add(track, track.PlayCount);
+                else
+                    counter[track] += track.PlayCount;
+            }
+
+            var sorted = counter.OrderByDescending(pair => pair.Value).Take(10);
+            var eb = new DiscordEmbedBuilder()
+                .WithTitle($"Most listened to tracks this week in {ctx.Guild.Name}")
+                .WithDescription(string.Join('\n',
+                    sorted.Select(x => $"{x.Key.Artist.Name} - {x.Key.Name} | {x.Value} Scrobbles")));
             await ctx.RespondAsync(embed: eb.Build());
         }
 
@@ -520,13 +564,20 @@ namespace Meiyounaise.Modules
 
         private static async Task<KeyValuePair<string, LastTrack>?> GetNowPlaying(string user)
         {
-            var response = await Client.User.GetRecentScrobbles(user);
-            if (!response.Success)
+            try
+            {
+                var response = await Client.User.GetRecentScrobbles(user);
+                if (!response.Success)
+                    return null;
+                var isNowPlaying = response.Content.First().IsNowPlaying;
+                if (isNowPlaying != null && (!response.Success || !isNowPlaying.Value))
+                    return null;
+                return new KeyValuePair<string, LastTrack>(user, response.Content.First());
+            }
+            catch (Exception)
+            {
                 return null;
-            var isNowPlaying = response.Content.First().IsNowPlaying;
-            if (isNowPlaying != null && (!response.Success || !isNowPlaying.Value))
-                return null;
-            return new KeyValuePair<string, LastTrack>(user, response.Content.First());
+            }
         }
 
         private static Chart GenerateChart(CommandContext ctx)
