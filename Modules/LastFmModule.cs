@@ -254,7 +254,7 @@ namespace Meiyounaise.Modules
         public async Task GenerateAlbumChart(CommandContext ctx,
             [Description("Available timespans: overall, year, half, quarter, month and week")]
             string timespan = "", [Description("Available options: all, names, plays, blank")]
-            string option = "trogi",
+            string option = "all",
             [Description("The username whose albumchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
@@ -309,7 +309,7 @@ namespace Meiyounaise.Modules
         public async Task GenerateArtistChart(CommandContext ctx,
             [Description("Available Timespans: overall, year, half, quarter, month and week")]
             string timespan = "", [Description("Available Options: all, names, plays, blank")]
-            string option = "trogi",
+            string option = "all",
             [Description("The username whose artistchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
@@ -615,14 +615,6 @@ namespace Meiyounaise.Modules
                             ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{album.Images.Large.AbsoluteUri}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
                             : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
                         break;
-                    case "trogi":
-                        if (album.PlayCount.HasValue)
-                            playCount = album.PlayCount.Value + " Plays";
-                        html += album.Images.Large != null
-                            ? $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('https://cdn.discordapp.com/emojis/563814153693954049.png'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>"
-                            : $"<div style=\"position:relative;display:inline-block\"><img src=\"https://lastfm.freetls.fastly.net/i/u/174s/c6f59c1e5e7240a4c0d427abd71f3dbb\"><p style=\"position:absolute;top:-12px;left:4px;\">{album.ArtistName} -<br>{album.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-
-                        break;
                     default:
                         throw new Exception($"`{option}` is not a valid option");
                 }
@@ -663,13 +655,6 @@ namespace Meiyounaise.Modules
                             playCount = artist.PlayCount.Value + " Plays";
                         html +=
                             $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('{imageUrl}'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-                        break;
-                    case "trogi":
-                        if (artist.PlayCount.HasValue)
-                            playCount = artist.PlayCount.Value + " Plays";
-                        html +=
-                            $"<div style=\"background-position: center center;background-repeat: no-repeat;background-size: cover;background-image: url('https://cdn.discordapp.com/emojis/563814153693954049.png'); width: 174px;  height:174px; position:relative;display:inline-block\"><p style=\"position:absolute;top:-12px;left:4px;\">{artist.Name}</p><p style = \"position: absolute; bottom: -12px;left: 4px;\">{playCount}</p></div>";
-
                         break;
                     default:
                         throw new Exception($"`{option}` is not a valid option");
@@ -883,7 +868,7 @@ namespace Meiyounaise.Modules
         public async Task GenerateAlbumChart(CommandContext ctx,
             [Description("Available timespans: overall, year, half, quarter, month and week")]
             string timespan = "", [Description("Available options: all, names, plays, blank")]
-            string option = "trogi",
+            string option = "all",
             [Description("The username whose albumchart you want to generate. Leave blank for own account.")]
             DiscordUser user = null)
         {
@@ -905,7 +890,7 @@ namespace Meiyounaise.Modules
         public async Task GenerateArtistChart(CommandContext ctx,
             [Description("Available Timespans: overall, year, half, quarter, month and week")]
             string timespan = "", [Description("Available Options: all, names, plays, blank")]
-            string option = "trogi",
+            string option = "all",
             [Description("The username whose artistchart you want to generate. Leave blank for own account.")]
             DiscordUser user = null)
         {
