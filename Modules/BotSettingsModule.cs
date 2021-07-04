@@ -90,7 +90,7 @@ namespace Meiyounaise.Modules
                 .AddField("Memory Usage", $"{process.WorkingSet64 / 1000000} MB", true)
                 .AddField("Guilds", ctx.Client.Guilds.Count.ToString(), true)
                 .AddField("Library Version", ctx.Client.VersionString, true);
-            await ctx.RespondAsync(null, false, embed.Build());
+            await ctx.RespondAsync(msg => msg.WithEmbed(embed));
         }
     }
 }

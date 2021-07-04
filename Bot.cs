@@ -24,7 +24,8 @@ namespace Meiyounaise
                 AutoReconnect = true,
                 MinimumLogLevel = LogLevel.Information,
                 Token = Utilities.GetKey("bottoken"),
-                TokenType = TokenType.Bot
+                TokenType = TokenType.Bot,
+                Intents = DiscordIntents.All
             });
 
             Client.UseInteractivity(new InteractivityConfiguration());

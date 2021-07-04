@@ -81,7 +81,7 @@ namespace Meiyounaise
                     new StringContent(content, Encoding.UTF8));
                 var rs = await response.Content.ReadAsStringAsync();
                 var data = JsonConvert.DeserializeObject<dynamic>(rs);
-                return $"https://haste.timostestdoma.in/{data.key}";
+                return $"https://haste.timostestdoma.in/{data?.key}";
             }
         }
         

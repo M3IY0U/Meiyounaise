@@ -40,7 +40,7 @@ namespace Meiyounaise.Modules
             eb.WithTitle(time == ""
                 ? "If you head to bed right now, you should try to wake up at one of the following times:"
                 : $"If you want to wake up at {dtime.ToShortTimeString()} you should try to go to bed at one of the following times:");
-            await ctx.RespondAsync("", false, eb.Build());
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithEmbed(eb));
         }
 
         [Command("twitchlotto"), Aliases("tr", "tl")]
@@ -205,7 +205,7 @@ namespace Meiyounaise.Modules
         {
             await Utilities.DownloadAsync(
                 new Uri($"https://api.streamelements.com/kappa/v2/speech?voice=Hans&text={message}"), "speech.mp3");
-            await ctx.RespondWithFileAsync("speech.mp3");
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithFile(new FileStream("speech.mp3", FileMode.Open)));
             File.Delete("speech.mp3");
         }
 

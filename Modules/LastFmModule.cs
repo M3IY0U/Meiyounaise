@@ -258,7 +258,7 @@ namespace Meiyounaise.Modules
             [Description("The username whose albumchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
-            var thisChart = GenerateChart(ctx);
+            var thisChart = GenerateChart();
             await ctx.TriggerTypingAsync();
             var user = Users.GetUser(ctx.User);
             if (user == null && username == "")
@@ -299,8 +299,12 @@ namespace Meiyounaise.Modules
             await GenerateImage(albums.Content.Count >= 5 ? "--width 870" : $"--width {albums.Content.Count * 174}",
                 $"--height {CalcHeight(albums.Content.Count)}", thisChart);
 
-            await ctx.RespondWithFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
-                $"Requested by: {thisChart.User}");
+            await using (var fs = new FileStream($"{Utilities.DataPath}{thisChart.Id}.png", FileMode.Open))
+            {
+                await ctx.RespondAsync(msg =>
+                    msg.WithFile(fs));
+            }
+
             DeleteCharts(thisChart.Id);
         }
 
@@ -313,7 +317,7 @@ namespace Meiyounaise.Modules
             [Description("The username whose artistchart you want to generate. Leave blank for own account.")]
             string username = "")
         {
-            var thisChart = GenerateChart(ctx);
+            var thisChart = GenerateChart();
 
             await ctx.TriggerTypingAsync();
 
@@ -359,8 +363,12 @@ namespace Meiyounaise.Modules
             await GenerateImage(artists.Content.Count >= 5 ? "--width 870" : $"--width {artists.Content.Count * 174}",
                 $"--height {CalcHeight(artists.Content.Count)}", thisChart);
 
-            await ctx.Channel.SendFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
-                $"Requested by: {thisChart.User}");
+            await using (var fs = new FileStream($"{Utilities.DataPath}{thisChart.Id}.png", FileMode.Open))
+            {
+                await ctx.RespondAsync(msg =>
+                    msg.WithFile(fs));
+            }
+
             DeleteCharts(thisChart.Id);
         }
 
@@ -375,8 +383,7 @@ namespace Meiyounaise.Modules
             var id = Guid.NewGuid();
             var thisChart = new Chart
             {
-                Id = id.ToString(),
-                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
+                Id = id.ToString()
             };
             await ctx.TriggerTypingAsync();
 
@@ -429,8 +436,12 @@ namespace Meiyounaise.Modules
                 "",
                 "", thisChart);
 
-            await ctx.Channel.SendFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
-                $"Requested by: {thisChart.User}");
+            await using (var fs = new FileStream($"{Utilities.DataPath}{thisChart.Id}.png", FileMode.Open))
+            {
+                await ctx.RespondAsync(msg =>
+                    msg.WithFile(fs));
+            }
+
             DeleteCharts(thisChart.Id);
         }
 
@@ -466,16 +477,33 @@ namespace Meiyounaise.Modules
                 await ctx.RespondAsync("No one in this guild is scrobbling something right now.");
                 return;
             }
-            
-            var embedDescription = string.Join("\n⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤\n", texts);
-            
-            var eb = new DiscordEmbedBuilder()
-                .WithAuthor($"Currently playing in {ctx.Guild.Name}",
-                    iconUrl: "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
-                .WithColor(DiscordColor.Red)
-                .WithThumbnail(ctx.Guild.IconUrl)
-                .WithDescription(embedDescription);
-            await ctx.RespondAsync(embed: eb.Build());
+
+            var embeds = new List<DiscordEmbed>();
+            var toAdd = "";
+
+            for (var i = 0; i < texts.Count; i++)
+            {
+                toAdd += texts[i];
+                if (i + 1 != texts.Count)
+                    toAdd += "\n⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤\n";
+                
+                if (toAdd.Length > 1800 || texts.Count <= i + 1)
+                {
+                    embeds.Add(new DiscordEmbedBuilder()
+                        .WithAuthor($"Currently playing in {ctx.Guild.Name}",
+                            iconUrl:
+                            "http://icons.iconarchive.com/icons/sicons/basic-round-social/256/last.fm-icon.png")
+                        .WithColor(DiscordColor.Red)
+                        .WithThumbnail(ctx.Guild.IconUrl)
+                        .WithDescription(toAdd));
+                    toAdd = "";
+                }
+            }
+
+            foreach (var embed in embeds)
+            {
+                await ctx.RespondAsync(embed);
+            }
         }
 
         [Command("test")]
@@ -520,8 +548,7 @@ namespace Meiyounaise.Modules
             var id = Guid.NewGuid();
             var thisChart = new Chart
             {
-                Id = id.ToString(),
-                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
+                Id = id.ToString()
             };
             await ctx.TriggerTypingAsync();
 
@@ -547,8 +574,12 @@ namespace Meiyounaise.Modules
                 $"https://quickchart.io/wordcloud?width=800&height=800&maxNumWords=125&rotation=60&minWordLength=2&scale=sqrt&format=png&fontScale=50&text={string.Join(' ', allTags)}";
 
             await Utilities.DownloadAsync(new Uri(url), $"{Utilities.DataPath}{thisChart.Id}.png");
-            await ctx.RespondWithFileAsync($"{Utilities.DataPath}{thisChart.Id}.png",
-                $"Requested by: {thisChart.User}");
+            await using (var fs = new FileStream($"{Utilities.DataPath}{thisChart.Id}.png", FileMode.Open))
+            {
+                await ctx.RespondAsync(msg =>
+                    msg.WithFile(fs));
+            }
+
             File.Delete($"{Utilities.DataPath}{thisChart.Id}.png");
         }
 
@@ -574,12 +605,11 @@ namespace Meiyounaise.Modules
             }
         }
 
-        private static Chart GenerateChart(CommandContext ctx)
+        private static Chart GenerateChart()
         {
             return new Chart
             {
-                Id = Guid.NewGuid().ToString(),
-                User = $"{ctx.User.Username}#{ctx.User.Discriminator}"
+                Id = Guid.NewGuid().ToString()
             };
         }
 
@@ -802,7 +832,6 @@ namespace Meiyounaise.Modules
         private class Chart
         {
             public string Id { get; set; }
-            public string User { get; set; }
         }
 
         #endregion

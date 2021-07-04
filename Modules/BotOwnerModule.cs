@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using System.Threading.Tasks;
@@ -242,34 +241,7 @@ namespace Meiyounaise.Modules
 
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":white_check_mark:"));
         }
-
-        [Command("messages"), RequireOwner, Hidden]
-        public async Task FetchMessages(CommandContext ctx, DiscordChannel channel, int amount = 50)
-        {
-            var messages = await channel.GetMessagesAsync(amount);
-            var sb = new StringBuilder();
-            foreach (var message in messages)
-            {
-                sb.AppendLine($"[{message.Timestamp:g}] {message.Author.Username}: {message.Content}");
-                if (message.Attachments.Count <= 0) continue;
-                sb.AppendLine("Attachments:");
-                foreach (var attachment in message.Attachments)
-                {
-                    sb.AppendLine("\t" + attachment.Url);
-                }
-            }
-
-            if (sb.Length > 2000)
-            {
-                File.WriteAllText("messages.txt", sb.ToString());
-                await ctx.RespondWithFileAsync("messages.txt");
-                File.Delete("messages.txt");
-                return;
-            }
-
-            await ctx.RespondAsync(sb.ToString());
-        }
-
+        
         [Command("eval"), RequireOwner, Hidden]
         public async Task Eval(CommandContext ctx, [RemainingText] string input)
         {

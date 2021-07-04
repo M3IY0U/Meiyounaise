@@ -220,7 +220,7 @@ namespace Meiyounaise.DB
                 {
                     //Post the message to the board
                     var bmsg = await e.Message.Channel.Guild.GetChannel(guild.BoardChannel)
-                        .SendMessageAsync(string.Join(" • ", reactions), false, BuildEmbed(msg));
+                        .SendMessageAsync(messageBuilder => messageBuilder.WithContent(string.Join(" • ", reactions)).WithEmbed(BuildEmbed(msg)));
 
                     //Update it in our local collection and in the database so it doesn't get sent twice
                     Messages.BoardMessages.Remove(Messages.BoardMessages.Find(x => x.SourceId == e.Message.Id));

@@ -7,19 +7,18 @@
 
     <ItemGroup>
       <PackageReference Include="CoolAsciiFaces.dll" Version="1.0.0" />
-      <PackageReference Include="DSharpPlus" Version="4.0.0-rc1" />
-      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-rc1" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-rc1" />
-      <PackageReference Include="GoogleTranslateFreeApi" Version="1.1.1" />
-      <PackageReference Include="Humanizer" Version="2.8.26" />
+      <PackageReference Include="DSharpPlus" Version="4.1.0-nightly-00915" />
+      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.1.0-nightly-00915" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.1.0-nightly-00915" />
+      <PackageReference Include="Humanizer" Version="2.11.10" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.2.0" />
-      <PackageReference Include="JikanDotNet" Version="1.5.4" />
+      <PackageReference Include="JikanDotNet" Version="1.5.6" />
       <PackageReference Include="log4net" Version="2.0.12" />
       <PackageReference Include="MarkovSharp" Version="4.0.32" />
-      <PackageReference Include="Microsoft.CodeAnalysis" Version="3.9.0-2.final" />
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.9.0-2.final" />
-      <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.9.0-2.final" />
-      <PackageReference Include="Microsoft.Data.Sqlite" Version="5.0.1" />
+      <PackageReference Include="Microsoft.CodeAnalysis" Version="3.11.0-1.final" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.11.0-1.final" />
+      <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.11.0-1.final" />
+      <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.0-preview.5.21301.9" />
       <PackageReference Include="SpotifyAPI-NET" Version="2.19.0" />
       <PackageReference Include="WanaKana-net" Version="1.0.0" />
       <PackageReference Include="YouTubeSearch" Version="2.2.6" />
