@@ -14,7 +14,7 @@ namespace Meiyounaise
     internal class Bot : IDisposable
     {
         public static DiscordClient Client;
-        private CommandsNextExtension _cnext;
+        public static CommandsNextExtension Cnext;
         private CancellationTokenSource _cts;
 
         public Bot()
@@ -29,10 +29,9 @@ namespace Meiyounaise
             });
 
             Client.UseInteractivity(new InteractivityConfiguration());
-
             _cts = new CancellationTokenSource();
 
-            _cnext = Client.UseCommandsNext(new CommandsNextConfiguration
+            Cnext = Client.UseCommandsNext(new CommandsNextConfiguration
             {
                 CaseSensitive = false,
                 EnableDefaultHelp = true,
@@ -41,8 +40,8 @@ namespace Meiyounaise
                 PrefixResolver = CustomPrefixPredicate
             });
 
-            _cnext.RegisterCommands(Assembly.GetEntryAssembly());
-            _cnext.CommandErrored += DB.EventHandlers.CommandErrored;
+            Cnext.RegisterCommands(Assembly.GetEntryAssembly());
+            Cnext.CommandErrored += DB.EventHandlers.CommandErrored;
 
             Client.Ready += DB.EventHandlers.Ready;
             Client.GuildCreated += DB.EventHandlers.GuildCreated;
@@ -74,7 +73,7 @@ namespace Meiyounaise
         public void Dispose()
         {
             Client.Dispose();
-            _cnext = null;
+            Cnext = null;
         }
     }
 }

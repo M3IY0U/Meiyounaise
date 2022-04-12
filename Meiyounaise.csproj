@@ -7,18 +7,18 @@
 
     <ItemGroup>
       <PackageReference Include="CoolAsciiFaces.dll" Version="1.0.0" />
-      <PackageReference Include="DSharpPlus" Version="4.1.0-nightly-00915" />
-      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.1.0-nightly-00915" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="4.1.0-nightly-00915" />
-      <PackageReference Include="Humanizer" Version="2.11.10" />
+      <PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01111" />
+      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01111" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01111" />
+      <PackageReference Include="Humanizer" Version="2.14.1" />
       <PackageReference Include="Inflatable.Lastfm" Version="1.2.0" />
-      <PackageReference Include="JikanDotNet" Version="1.5.6" />
-      <PackageReference Include="log4net" Version="2.0.12" />
+      <PackageReference Include="JikanDotNet" Version="2.0.1" />
+      <PackageReference Include="log4net" Version="2.0.14" />
       <PackageReference Include="MarkovSharp" Version="4.0.32" />
-      <PackageReference Include="Microsoft.CodeAnalysis" Version="3.11.0-1.final" />
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.11.0-1.final" />
-      <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.11.0-1.final" />
-      <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.0-preview.5.21301.9" />
+      <PackageReference Include="Microsoft.CodeAnalysis" Version="4.2.0-2.final" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.2.0-2.final" />
+      <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="4.2.0-2.final" />
+      <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.0-preview.2.22153.1" />
       <PackageReference Include="SpotifyAPI-NET" Version="2.19.0" />
       <PackageReference Include="WanaKana-net" Version="1.0.0" />
       <PackageReference Include="YouTubeSearch" Version="2.2.6" />

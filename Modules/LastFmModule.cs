@@ -506,7 +506,7 @@ namespace Meiyounaise.Modules
             }
         }
 
-        [Command("test")]
+        [Command("serverweek")]
         public async Task WeeklyServer(CommandContext ctx)
         {
             var users = new HashSet<string>();
