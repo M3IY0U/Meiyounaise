@@ -127,7 +127,7 @@ namespace Meiyounaise.DB
             if (!ShouldSendMessage(guild.LeaveMsg, guild.JlMessageChannel)) return;
 
             await e.Guild.GetChannel(guild.JlMessageChannel)
-                .SendMessageAsync(guild.LeaveMsg.Replace("[user]", $"{e.Member.Username}#{e.Member.Discriminator}"));
+                .SendMessageAsync(guild.LeaveMsg.Replace("[user]", $"@{e.Member.Username}"));
         }
 
         private static bool ShouldSendMessage(string m, ulong c)

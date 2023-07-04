@@ -82,7 +82,7 @@ namespace Meiyounaise.Modules
                     (float) rand.NextDouble()))
                 .WithAuthor("Meiyounaise", null, ctx.Client.CurrentUser.AvatarUrl)
                 .WithTitle("Info about this Bot")
-                .WithDescription("This rewrite of Meiyounaise is being maintained by Meiyou#0001 on Discord. \n" +
+                .WithDescription("This rewrite of Meiyounaise is being maintained by @meiyou on Discord. \n" +
                                  "If something breaks or kills the bot, please tell me :)\n" +
                                  "[Here's an invite if you want this bot on your server](https://discordapp.com/oauth2/authorize?client_id=488112585640509442&permissions=16384&scope=bot)")
                 .AddField("Process UpTime", (DateTime.Now - process.StartTime).ToString("d'd 'h'h 'm'm 's's'"), true)
